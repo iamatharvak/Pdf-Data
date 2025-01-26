@@ -1,0 +1,62 @@
+.App {
+  font-family: Arial, sans-serif;
+  max-width: 600px;
+  margin: 50px auto;
+  text-align: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+label {
+  font-weight: bold;
+}
+
+input {
+  padding: 10px;
+  font-size: 16px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.response {
+  margin-top: 30px;
+  text-align: left;
+}
+
+.response h2 {
+  font-size: 20px;
+}
+
+.response p {
+  font-size: 16px;
+}
+.response-table table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 20px 0;
+}
+.response-table th, .response-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+.response-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
