@@ -8,7 +8,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
-const genAI = new GoogleGenerativeAI("AIzaSyAVNNesTX2gCOr3MQfR2t6-MhrrNonNz1c");
+const genAI = new GoogleGenerativeAI("");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.use(cors());
 
