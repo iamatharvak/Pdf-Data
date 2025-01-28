@@ -3,7 +3,7 @@ const pdfParse = require("pdf-parse");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
-const apikey = process.env.API_KEY;
+const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
 const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -11,7 +11,6 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 let extractedDataCache = null;
 
 module.exports = (req, res) => {
-  // Enable CORS for the specified origin
   res.setHeader(
     "Access-Control-Allow-Origin",
     "https://pdf-data-xlwv.vercel.app"
@@ -20,10 +19,9 @@ module.exports = (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // Handle preflight request
+    res.status(200);
   }
 
-  // Use multer to handle file upload
   upload.single("file")(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
@@ -31,6 +29,7 @@ module.exports = (req, res) => {
     }
 
     try {
+      console.log(genAI.apiKey);
       const fileBuffer = req.file.buffer;
       const query = req.body.query;
 
