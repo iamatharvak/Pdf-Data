@@ -12,7 +12,13 @@ const app = express();
 const upload = multer({ dest: "uploads/" });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://pdf-data-xlwv-8jh7qll28-iamatharvaks-projects.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 
 let extractedDataCache = null;
 
