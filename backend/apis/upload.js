@@ -11,21 +11,23 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 let extractedDataCache = null;
 
 module.exports = (req, res) => {
-  
+  // Enable CORS for the specified origin
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://pdf-data-xlwv.vercel.app"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end(); // Handle preflight request
+  }
+
+  // Use multer to handle file upload
   upload.single("file")(req, res, async (err) => {
     if (err) {
       return res.status(500).send("Error uploading file.");
     }
-
-    res.setHeader(
-      "Access-Control-Allow-Origin",
-      "https://pdf-data-xlwv.vercel.app"
-    );
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
 
     try {
       const fileBuffer = req.file.buffer;
@@ -45,7 +47,6 @@ module.exports = (req, res) => {
 
       const result = await model.generateContent(prompt);
 
-      
       const rawResponse = result.response.text();
       console.log("Raw Model Response:", rawResponse);
 

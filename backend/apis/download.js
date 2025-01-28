@@ -3,6 +3,18 @@ const XLSX = require("xlsx");
 let extractedDataCache = null;
 
 module.exports = (req, res) => {
+  // Enable CORS for the specified origin
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://pdf-data-xlwv.vercel.app"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end(); // Handle preflight request
+  }
+
   try {
     if (!extractedDataCache) {
       return res
