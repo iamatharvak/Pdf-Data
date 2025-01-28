@@ -48,8 +48,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const result = await model.generateContent(prompt);
 
-    fs.unlinkSync(filePath);
-
     // Log raw response for debugging
     const rawResponse = result.response.text();
     console.log("Raw Model Response:", rawResponse);
