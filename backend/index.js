@@ -5,14 +5,16 @@ const pdfParse = require("pdf-parse");
 const cors = require("cors");
 const XLSX = require("xlsx");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+require("dotenv").config();
 
+const apikey = process.env.API_KEY;
 const app = express();
 const upload = multer({ dest: "uploads/" });
-const genAI = new GoogleGenerativeAI("AIzaSyAVNNesTX2gCOr3MQfR2t6-MhrrNonNz1c");
+const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.use(cors());
 
-let extractedDataCache = null; // Cache extracted data for Excel download
+let extractedDataCache = null;
 
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
@@ -41,15 +43,13 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     const rawResponse = result.response.text();
     console.log("Raw Model Response:", rawResponse);
 
-    // Remove backticks or extraneous content
     const cleanedResponse = rawResponse
-      .replace(/```json/g, "") // Remove opening backticks
-      .replace(/```/g, "") // Remove closing backticks
-      .trim(); // Remove extra whitespace
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
     console.log("Cleaned Response:", cleanedResponse);
 
-    // Parse the cleaned JSON response
     const jsonResponse = JSON.parse(cleanedResponse);
     console.log("Parsed JSON Response:", jsonResponse);
 
@@ -95,25 +95,25 @@ app.get("/download", (req, res) => {
   }
 });
 
-function parsePDFContent(pdfText) {
-  const lines = pdfText.split("\n");
-  const columns = lines[0].split(/\s+/); // Example: Assume first line contains column headers
-  const rows = lines.slice(1).map((line) => line.split(/\s+/));
+// function parsePDFContent(pdfText) {
+//   const lines = pdfText.split("\n");
+//   const columns = lines[0].split(/\s+/); // Example: Assume first line contains column headers
+//   const rows = lines.slice(1).map((line) => line.split(/\s+/));
 
-  return {
-    columns: columns,
-    rows: rows,
-  };
-}
+//   return {
+//     columns: columns,
+//     rows: rows,
+//   };
+// }
 
-function parsePDFContent(pdfText) {
-  const lines = pdfText.split("\n");
-  const columns = lines[0].split(/\s+/);
-  const rows = lines.slice(1).map((line) => line.split(/\s+/));
-  return {
-    columns: columns,
-    rows: rows,
-  };
-}
+// function parsePDFContent(pdfText) {
+//   const lines = pdfText.split("\n");
+//   const columns = lines[0].split(/\s+/);
+//   const rows = lines.slice(1).map((line) => line.split(/\s+/));
+//   return {
+//     columns: columns,
+//     rows: rows,
+//   };
+// }
 
 app.listen(5000, () => console.log("Server running on http://localhost:5000"));
