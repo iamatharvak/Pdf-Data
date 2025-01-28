@@ -28,7 +28,7 @@ const FileUpload = () => {
       );
 
       setTableData(response.data);
-      setError(""); // Clear previous errors
+      setError(""); 
     } catch (error) {
       console.error("Error uploading file:", error);
       setError("Error processing the file. Please try again.");
