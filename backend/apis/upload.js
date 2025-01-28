@@ -11,7 +11,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 let extractedDataCache = null;
 
 module.exports = (req, res) => {
-  // Use multer to handle file upload
+  
   upload.single("file")(req, res, async (err) => {
     if (err) {
       return res.status(500).send("Error uploading file.");
@@ -45,7 +45,7 @@ module.exports = (req, res) => {
 
       const result = await model.generateContent(prompt);
 
-      // Log raw response for debugging
+      
       const rawResponse = result.response.text();
       console.log("Raw Model Response:", rawResponse);
 

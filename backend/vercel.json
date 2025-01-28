@@ -9,5 +9,15 @@
       "src": "api/download.js",
       "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    {
+      "src": "/api/upload",
+      "dest": "/api/upload.js"
+    },
+    {
+      "src": "/api/download",
+      "dest": "/api/download.js"
+    }
   ]
 }
