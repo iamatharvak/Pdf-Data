@@ -22,7 +22,7 @@ const FileUpload = () => {
 
     try {
       const response = await axios.post(
-        "https://pdf-data-mocha.vercel.app/upload",
+        "https://pdf-data-mocha.vercel.app/api/upload",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -45,7 +45,7 @@ const FileUpload = () => {
 
     try {
       const response = await axios.get(
-        "https://pdf-data-mocha.vercel.app/download",
+        "https://pdf-data-mocha.vercel.app/api/download",
         {
           responseType: "blob",
         }
