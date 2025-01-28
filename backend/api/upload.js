@@ -26,12 +26,17 @@ module.exports = (req, res) => {
   // Use multer to handle file upload
   upload.single("file")(req, res, async (err) => {
     if (err) {
+      console.error("Multer error:", err);
       return res.status(500).send("Error uploading file.");
     }
 
     try {
       const fileBuffer = req.file.buffer;
       const query = req.body.query;
+
+      if (!query) {
+        return res.status(400).send("Query is required.");
+      }
 
       const pdfData = await pdfParse(fileBuffer);
 
