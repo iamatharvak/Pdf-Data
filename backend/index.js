@@ -29,11 +29,11 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   try {
-    console.log(req.file.path);
-    const filePath = req.file.path;
+    console.log(req.file);
+    const fileBuffer = req.file.buffer;
     const query = req.body.query;
 
-    const pdfBuffer = fs.readFileSync(filePath);
+    const pdfBuffer = fs.readFileSync(fileBuffer);
     const pdfData = await pdfParse(pdfBuffer);
 
     const prompt = `
