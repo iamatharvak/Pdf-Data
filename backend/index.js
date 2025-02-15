@@ -24,7 +24,8 @@ let extractedDataCache = null;
 app.post("/upload", upload.single("file"), async (req, res) => {
   res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app"
+    "https://pdf-data-xlwv.vercel.app",
+    "http://localhost:3000"
   );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
