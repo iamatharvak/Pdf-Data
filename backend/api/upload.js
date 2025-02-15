@@ -13,7 +13,8 @@ let extractedDataCache = null;
 module.exports = (req, res) => {
   res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app"
+    "https://pdf-data-xlwv.vercel.app",
+    "http://localhost:3000"
   );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -29,7 +30,7 @@ module.exports = (req, res) => {
     }
 
     try {
-      console.log(genAI.apiKey);
+      // console.log(genAI.apiKey);
       const fileBuffer = req.file.buffer;
       const query = req.body.query;
 

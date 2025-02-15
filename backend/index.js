@@ -14,7 +14,7 @@ const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.use(
   cors({
-    origin: "https://pdf-data-xlwv.vercel.app",
+    origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
   })
 );
@@ -104,6 +104,7 @@ app.get("/download", (req, res) => {
   }
 });
 
+app.listen(console.log(`Server running on http://localhost:${""}`));
 // function parsePDFContent(pdfText) {
 //   const lines = pdfText.split("\n");
 //   const columns = lines[0].split(/\s+/); // Example: Assume first line contains column headers
@@ -124,5 +125,3 @@ app.get("/download", (req, res) => {
 //     rows: rows,
 //   };
 // }
-
-
