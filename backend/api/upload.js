@@ -70,7 +70,7 @@ module.exports = (req, res) => {
 
       extractedDataCache = results;
 
-      res.status(200).json(results);
+      res.status(200).json({ query, data: results });
     } catch (error) {
       console.error("Error processing the request:", error);
       res.status(500).send("Error processing the files.");
