@@ -14,7 +14,7 @@ const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.use(
   cors({
-    origin: "https://pdf-data-xlwv.vercel.app",
+    origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
   })
 );
@@ -124,5 +124,3 @@ app.get("/download", (req, res) => {
 //     rows: rows,
 //   };
 // }
-
-
