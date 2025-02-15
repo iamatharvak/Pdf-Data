@@ -10,12 +10,16 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 let extractedDataCache = null;
 
+const allowedOrigins = [
+  "https://pdf-data-xlwv.vercel.app",
+  "http://localhost:3000",
+];
+
 module.exports = (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app",
-    "http://localhost:3000"
-  );
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
