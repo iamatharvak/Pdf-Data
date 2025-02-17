@@ -28,7 +28,7 @@ const FileUpload = () => {
       );
       console.log("here", response);
       setTableData(response.data);
-      console.log(response);
+      console.log(response.data);
       console.log(tableData);
       setError("");
     } catch (error) {
