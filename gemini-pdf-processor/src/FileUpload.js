@@ -28,6 +28,7 @@ const FileUpload = () => {
       );
       console.log("here", response);
       setTableData(response.data);
+      console.log(tableData);
       setError("");
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -70,19 +71,27 @@ const FileUpload = () => {
   };
 
   const renderTable = () => {
-    if (!tableData || !tableData.columns || !tableData.rows) return null;
+    if (
+      !tableData ||
+      !tableData[0] ||
+      !tableData[0].columns ||
+      !tableData[0].rows
+    )
+      return null;
+
+    const { columns, rows } = tableData[0]; 
 
     return (
       <table border="1">
         <thead>
           <tr>
-            {tableData.columns.map((col, index) => (
+            {columns.map((col, index) => (
               <th key={index}>{col}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {tableData.rows.map((row, rowIndex) => (
+          {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex}>{cell}</td>
