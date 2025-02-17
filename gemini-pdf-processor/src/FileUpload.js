@@ -28,6 +28,7 @@ const FileUpload = () => {
       );
       console.log("here", response);
       setTableData(response.data);
+      console.log(response);
       console.log(tableData);
       setError("");
     } catch (error) {
@@ -79,7 +80,7 @@ const FileUpload = () => {
     )
       return null;
 
-    const { columns, rows } = tableData[0]; 
+    const { columns, rows } = tableData[0];
 
     return (
       <table border="1">
