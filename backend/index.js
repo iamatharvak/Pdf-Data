@@ -1,128 +1,76 @@
 const express = require("express");
 const multer = require("multer");
-const fs = require("fs");
-const pdfParse = require("pdf-parse");
 const cors = require("cors");
-const XLSX = require("xlsx");
+const NodeCache = require("node-cache");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
-const apikey = process.env.API_KEY;
 const app = express();
-const upload = multer({ dest: "uploads/" });
-const genAI = new GoogleGenerativeAI(apikey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const PORT = 5000;
+
+// CORS Configuration
 app.use(
   cors({
     origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-let extractedDataCache = null;
+// Multer Storage (Memory to avoid saving files)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-app.post("/upload", upload.single("file"), async (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app",
-    "http://localhost:3000"
-  );
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  try {
-    console.log(req.file);
-    const fileBuffer = req.file.buffer;
-    const query = req.body.query;
+// Google Generative AI Setup
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Changed to flash model
 
-    const pdfBuffer = fs.readFileSync(fileBuffer);
-    const pdfData = await pdfParse(pdfBuffer);
+// API Cache (TTL: 1 hour)
+const cache = new NodeCache({ stdTTL: 3600 });
 
-    const prompt = `
-    PDF Content: ${pdfData.text}
-
-    User Query: ${query}
-
-    Instruction: Extract the financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
-    1. "columns": An array of column names for the table.
-    2. "rows": A 2D array where each sub-array represents a row of data.
-    `;
-
-    const result = await model.generateContent(prompt);
-
-    // Log raw response for debugging
-    const rawResponse = result.response.text();
-    console.log("Raw Model Response:", rawResponse);
-
-    const cleanedResponse = rawResponse
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    console.log("Cleaned Response:", cleanedResponse);
-
-    const jsonResponse = JSON.parse(cleanedResponse);
-    console.log("Parsed JSON Response:", jsonResponse);
-
-    res.json(jsonResponse);
-    extractedDataCache = jsonResponse;
-  } catch (error) {
-    console.error("Error processing the request:", error);
-    res.status(500).send("Error processing the file.");
+// Function to split text into chunks
+function splitText(text, chunkSize = 5000) {
+  let chunks = [];
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize));
   }
-});
+  return chunks;
+}
 
-app.get("/download", (req, res) => {
+// Upload and Process PDF
+app.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    if (!extractedDataCache) {
-      return res
-        .status(400)
-        .send("No extracted data available. Please upload a PDF first.");
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    const pdfBuffer = req.file.buffer;
+    const pdfBase64 = pdfBuffer.toString("base64");
+
+    // Check Cache First
+    if (cache.has(pdfBase64)) {
+      return res.json({ extractedData: cache.get(pdfBase64) });
     }
 
-    const extractedData = extractedDataCache;
+    const chunks = splitText(pdfBase64, 50000); 
+    let extractedData = "";
 
-    const workbook = XLSX.utils.book_new();
-    const worksheetData = [extractedData.columns, ...extractedData.rows];
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    for (const chunk of chunks) {
+      const prompt = `Extract table data from this PDF chunk: ${chunk}`;
+      const result = await model.generateContent(prompt);
+      const rawResponse = await result.response.text();
+      extractedData += rawResponse + "\n";
+    }
 
-    const excelBuffer = XLSX.write(workbook, {
-      type: "buffer",
-      bookType: "xlsx",
-    });
+    // Store in cache
+    cache.set(pdfBase64, extractedData);
 
-    res.setHeader("Content-Disposition", "attachment; filename=data.xlsx");
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-
-    console.log("here response", excelBuffer);
-    res.send(excelBuffer);
+    res.json({ extractedData });
   } catch (error) {
-    console.error("Error during download:", error);
-    res.status(500).send("Error generating Excel file.");
+    console.error("Error processing file:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-app.listen(console.log(`Server running on http://localhost:${""}`));
-// function parsePDFContent(pdfText) {
-//   const lines = pdfText.split("\n");
-//   const columns = lines[0].split(/\s+/); // Example: Assume first line contains column headers
-//   const rows = lines.slice(1).map((line) => line.split(/\s+/));
-
-//   return {
-//     columns: columns,
-//     rows: rows,
-//   };
-// }
-
-// function parsePDFContent(pdfText) {
-//   const lines = pdfText.split("\n");
-//   const columns = lines[0].split(/\s+/);
-//   const rows = lines.slice(1).map((line) => line.split(/\s+/));
-//   return {
-//     columns: columns,
-//     rows: rows,
-//   };
-// }
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
