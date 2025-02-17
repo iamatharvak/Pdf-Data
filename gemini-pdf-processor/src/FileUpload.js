@@ -2,46 +2,144 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const FileUpload = () => {
-  const [files, setFiles] = useState([]);
   const [tableData, setTableData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState(null);
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
 
-  const handleFileChange = (e) => setFiles(Array.from(e.target.files));
+  const handleFileChange = (event) => setFile(event.target.files[0]);
+  const handleQueryChange = (event) => setQuery(event.target.value);
 
   const handleUpload = async () => {
-    if (!files.length) return alert("Please select a file");
-    setLoading(true);
+    if (!file || !query) {
+      setError("Both file upload and query are required!");
+      return;
+    }
 
     const formData = new FormData();
-    files.forEach((file) => formData.append("file", file));
+    formData.append("file", file);
+    formData.append("query", query);
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/upload",
+        "https://pdf-data-mocha.vercel.app/api/upload",
         formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      console.log("here", response);
+      setTableData(response.data.data);
+      console.log(response.data.data);
+      console.log(tableData);
+      setError("");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setError("Error processing the file. Please try again.");
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!tableData) {
+      setError(
+        "No data available for download. Please upload and query a file first."
+      );
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        "https://pdf-data-mocha.vercel.app/api/download",
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          responseType: "blob",
         }
       );
-      setTableData(response.data.extractedData);
+
+      console.log("Response:", response);
+      if (response.status === 200 && response.data) {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "data.xlsx");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        throw new Error("No data available for download");
+      }
     } catch (error) {
-      console.error("Upload Error:", error);
-      alert("File upload failed");
+      console.error("Error downloading the file:", error);
+      setError("Error downloading the Excel file.");
     }
-    setLoading(false);
+  };
+
+  const renderTable = () => {
+    if (
+      !tableData ||
+      !tableData[0] ||
+      !tableData[0].columns ||
+      !tableData[0].rows
+    )
+      return null;
+
+    const { columns, rows } = tableData[0];
+
+    return (
+      <table border="1">
+        <thead>
+          <tr>
+            {columns.map((col, index) => (
+              <th key={index}>{col}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {row.map((cell, cellIndex) => (
+                <td key={cellIndex}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
   };
 
   return (
     <div>
-      <input type="file" onChange={handleFileChange} multiple />
-      <button onClick={handleUpload} disabled={loading}>
-        {loading ? "Uploading..." : "Upload & Extract"}
-      </button>
-      {tableData && (
-        <div>
-          <h3>Extracted Data:</h3>
-          <pre>{JSON.stringify(tableData, null, 2)}</pre>
-        </div>
+      <h2>Upload PDF and Query Financial Data</h2>
+
+      <div>
+        <label htmlFor="fileInput">Upload File:</label>
+        <input
+          id="fileInput"
+          type="file"
+          onChange={handleFileChange}
+          accept=".pdf"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="queryInput">Enter Query:</label>
+        <input
+          id="queryInput"
+          type="text"
+          placeholder="Enter your query"
+          value={query}
+          onChange={handleQueryChange}
+        />
+      </div>
+
+      <button onClick={handleUpload}>Upload and Query</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {tableData ? (
+        <>
+          {renderTable()}
+          <button onClick={handleDownload}>Download Excel</button>
+        </>
+      ) : (
+        <p>No data to display</p>
       )}
     </div>
   );

@@ -9,66 +9,71 @@ const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 let extractedDataCache = null;
-
+const allowedOrigins = [
+  "https://pdf-data-xlwv.vercel.app",
+  "http://localhost:3000",
+];
 module.exports = (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app",
-    "http://localhost:3000"
-  );
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    res.status(200);
+    return res.status(200).end();
   }
 
-  upload.single("file")(req, res, async (err) => {
+  upload.array("file")(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
-      return res.status(500).send("Error uploading file.");
+      return res.status(500).send("Error uploading files.");
     }
 
     try {
-      // console.log(genAI.apiKey);
-      const fileBuffer = req.file.buffer;
+      const files = req.files;
       const query = req.body.query;
 
-      if (!query) {
-        return res.status(400).send("Query is required.");
+      if (!query || files.length === 0) {
+        return res
+          .status(400)
+          .send("Query and at least one file are required.");
       }
 
-      const pdfData = await pdfParse(fileBuffer);
+      const results = [];
 
-      const prompt = `
-      PDF Content: ${pdfData.text}
+      for (const file of files) {
+        const pdfData = await pdfParse(file.buffer);
 
-      User Query: ${query}
+        const prompt = `
+        PDF Content: ${pdfData.text}
 
-      Instruction: Extract the financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
-      1. "columns": An array of column names for the table.
-      2. "rows": A 2D array where each sub-array represents a row of data.
-      `;
+        User Query: ${query}
 
-      const result = await model.generateContent(prompt);
+        Instruction: Extract the financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
+        1. "columns": An array of column names for the table.
+        2. "rows": A 2D array where each sub-array represents a row of data.
+        `;
 
-      const rawResponse = result.response.text();
-      console.log("Raw Model Response:", rawResponse);
+        const result = await model.generateContent(prompt);
+        const rawResponse = result.response.text();
 
-      const cleanedResponse = rawResponse
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
+        const cleanedResponse = rawResponse
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
 
-      const jsonResponse = JSON.parse(cleanedResponse);
-      console.log("Parsed JSON Response:", jsonResponse);
+        const jsonResponse = JSON.parse(cleanedResponse);
+        results.push(jsonResponse);
+      }
 
-      extractedDataCache = jsonResponse;
+      extractedDataCache = results;
 
-      res.status(200).json(jsonResponse);
+      res.status(200).json({ query, data: results });
     } catch (error) {
       console.error("Error processing the request:", error);
-      res.status(500).send("Error processing the file.");
+      res.status(500).send("Error processing the files.");
     }
   });
 };
