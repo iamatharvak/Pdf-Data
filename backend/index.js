@@ -8,31 +8,22 @@ require("dotenv").config();
 const app = express();
 const PORT = 5000;
 
-// CORS Configuration
-app.use(
-  cors({
-    origin: [
-      // "https://pdf-data-xlwv.vercel.app",
-      "http://localhost:3000",
-      "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-    ],
-    methods: ["GET", "POST"],
-    // allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const allowedOrigins = [
+  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+  // "https://pdf-data-xlwv.vercel.app",
+  "http://localhost:3000",
+];
 
-// Multer Storage (Memory to avoid saving files)
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Google Generative AI Setup
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// API Cache (TTL: 1 hour)
 const cache = new NodeCache({ stdTTL: 3600 });
 
-// Function to split text into chunks
 function splitText(text, chunkSize = 5000) {
   let chunks = [];
   for (let i = 0; i < text.length; i += chunkSize) {
@@ -41,7 +32,7 @@ function splitText(text, chunkSize = 5000) {
   return chunks;
 }
 
-// Upload and Process PDF
+
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });

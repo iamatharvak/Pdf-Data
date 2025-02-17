@@ -24,8 +24,14 @@ const FileUpload = () => {
       const response = await axios.post(
         "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/upload",
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+          },
+        }
       );
+      console.log(process.env.REACT_APP_API_KEY);
       console.log("here", response);
       setTableData(response.data.data);
       console.log(response.data.data);
