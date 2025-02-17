@@ -25,7 +25,7 @@ module.exports = (req, res) => {
     return res.status(200).end();
   }
 
-  upload.array("files")(req, res, async (err) => {
+  upload.array("file")(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
       return res.status(500).send("Error uploading files.");
