@@ -3,7 +3,7 @@ const pdfParse = require("pdf-parse");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
-const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
+const apikey = process.env.API_KEY;
 const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -18,6 +18,7 @@ module.exports = (req, res) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
   }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
