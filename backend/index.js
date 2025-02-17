@@ -12,12 +12,12 @@ const PORT = 5000;
 app.use(
   cors({
     origin: [
-      "https://pdf-data-xlwv.vercel.app",
+      // "https://pdf-data-xlwv.vercel.app",
       "http://localhost:3000",
       "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
     ],
     methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    // allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -27,7 +27,7 @@ const upload = multer({ storage });
 
 // Google Generative AI Setup
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Changed to flash model
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
 // API Cache (TTL: 1 hour)
 const cache = new NodeCache({ stdTTL: 3600 });

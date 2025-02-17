@@ -10,7 +10,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 let extractedDataCache = null;
 const allowedOrigins = [
-  "https://pdf-data-xlwv.vercel.app",
+  // "https://pdf-data-xlwv.vercel.app",
   "http://localhost:3000",
   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
 ];
