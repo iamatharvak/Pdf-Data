@@ -22,7 +22,7 @@ const FileUpload = () => {
 
     try {
       const response = await axios.post(
-        "https://pdf-data-mocha.vercel.app/api/upload",
+        "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/upload",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

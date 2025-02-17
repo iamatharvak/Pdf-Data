@@ -12,6 +12,7 @@ let extractedDataCache = null;
 const allowedOrigins = [
   "https://pdf-data-xlwv.vercel.app",
   "http://localhost:3000",
+  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
 ];
 module.exports = (req, res) => {
   const origin = req.headers.origin;
