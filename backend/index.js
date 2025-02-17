@@ -11,7 +11,11 @@ const PORT = 5000;
 // CORS Configuration
 app.use(
   cors({
-    origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
+    origin: [
+      "https://pdf-data-xlwv.vercel.app",
+      "http://localhost:3000",
+      "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+    ],
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -50,7 +54,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       return res.json({ extractedData: cache.get(pdfBase64) });
     }
 
-    const chunks = splitText(pdfBase64, 50000); 
+    const chunks = splitText(pdfBase64, 50000);
     let extractedData = "";
 
     for (const chunk of chunks) {
