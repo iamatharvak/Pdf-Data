@@ -27,8 +27,8 @@ const FileUpload = () => {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
       console.log("here", response);
-      setTableData(response.data);
-      console.log(response.data);
+      setTableData(response.data.data);
+      console.log(response.data.data);
       console.log(tableData);
       setError("");
     } catch (error) {
