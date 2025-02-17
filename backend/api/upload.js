@@ -2,6 +2,30 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
+const cors = require("cors");
+
+// Define allowed origins
+// const allowedOrigins = [
+//   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+//   "http://localhost:3000",
+// ];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: "GET, POST, OPTIONS",
+  allowedHeaders: "Content-Type, Authorization",
+};
+
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
 
 const apikey = process.env.API_KEY;
 const upload = multer({ storage: multer.memoryStorage() });
