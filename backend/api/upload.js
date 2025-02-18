@@ -46,7 +46,11 @@ const allowedOrigins = [
   "http://localhost:3000",
 ];
 module.exports = (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", origin);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  // res.setHeader("Access-Control-Allow-Origin", origin);
   // res.setHeader("Access-Control-Allow-Credentials", "true");
 
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
