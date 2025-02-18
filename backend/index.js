@@ -13,28 +13,28 @@ const upload = multer({ dest: "uploads/" });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const allowedOrigins = [
-  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-  "http://localhost:3000",
-];
 app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    // allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+const allowedOrigins = [
+  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+  "http://localhost:3000",
+];
 
 let extractedDataCache = null;
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app"
+  );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  // res.setHeader("Access-Control-Allow-Credentials", "true");
 
   try {
     console.log(req.file);

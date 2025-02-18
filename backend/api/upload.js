@@ -4,25 +4,31 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const cors = require("cors");
 
+const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
+const upload = multer({ storage: multer.memoryStorage() });
+const genAI = new GoogleGenerativeAI(apikey);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+let extractedDataCache = null;
 const allowedOrigins = [
   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
   "http://localhost:3000",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true,
+//   })
+// );
 
 // Define allowed origins
 // const allowedOrigins = [
@@ -47,12 +53,6 @@ app.use(
 
 // app.options("*", cors(corsOptions));
 
-const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
-const upload = multer({ storage: multer.memoryStorage() });
-const genAI = new GoogleGenerativeAI(apikey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-let extractedDataCache = null;
 // const allowedOrigins = [
 //   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
 //   "http://localhost:3000",
