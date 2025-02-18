@@ -12,9 +12,14 @@ const app = express();
 const upload = multer({ dest: "uploads/" });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const allowedOrigins = [
+  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+  "http://localhost:3000",
+];
 app.use(
   cors({
-    origin: "*", 
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -23,18 +28,23 @@ app.use(
 let extractedDataCache = null;
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app"
-  );
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
   try {
     console.log(req.file);
-    const fileBuffer = req.file.buffer;
     const query = req.body.query;
 
-    const pdfBuffer = fs.readFileSync(fileBuffer);
+    if (!req.file || !query) {
+      return res.status(400).json({ error: "File and query are required" });
+    }
+
+    const pdfBuffer = fs.readFileSync(req.file.path);
     const pdfData = await pdfParse(pdfBuffer);
 
     const prompt = `
@@ -42,31 +52,21 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     User Query: ${query}
 
-    Instruction: Extract the financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
-    1. "columns": An array of column names for the table.
-    2. "rows": A 2D array where each sub-array represents a row of data.
+    Instruction: Extract the financial data from the PDF content provided. Present the extracted data in JSON format.
     `;
 
     const result = await model.generateContent(prompt);
-
-    // Log raw response for debugging
     const rawResponse = result.response.text();
-    console.log("Raw Model Response:", rawResponse);
 
     const cleanedResponse = rawResponse
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
-
-    console.log("Cleaned Response:", cleanedResponse);
-
     const jsonResponse = JSON.parse(cleanedResponse);
-    console.log("Parsed JSON Response:", jsonResponse);
 
     res.json(jsonResponse);
-    extractedDataCache = jsonResponse;
   } catch (error) {
-    console.error("Error processing the request:", error);
+    console.error("Error processing request:", error);
     res.status(500).send("Error processing the file.");
   }
 });

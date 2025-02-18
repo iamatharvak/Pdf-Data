@@ -4,11 +4,23 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const cors = require("cors");
 
+const allowedOrigins = [
+  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+  "http://localhost:3000",
+];
+
 app.use(
   cors({
-    origin: "*",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
@@ -41,10 +53,10 @@ const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 let extractedDataCache = null;
-const allowedOrigins = [
-  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-  "http://localhost:3000",
-];
+// const allowedOrigins = [
+//   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+//   "http://localhost:3000",
+// ];
 module.exports = (req, res) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
