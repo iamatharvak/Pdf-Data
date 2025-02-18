@@ -1,0 +1,23 @@
+Key Financial Metrics 📊
+AUM
+Disbursement Value
+Total Income
+NIM (Net Interest Margin)
+Profit After Tax (PAT)
+ROA (Return on Assets)
+ROE (Return on Equity)
+Operating Expenses
+Asset Quality Metrics 🚨
+GNPA & NNPA (%)
+DPD Buckets (30, 60, 90+)
+Provision Coverage Ratio (PCR)
+Write-offs (%)
+Stage 1, 2, 3 Assets
+Operational Metrics 🏢
+No. of Branches
+Geographical Presence
+Loan Ticket Size
+Customer Base
+Self-Employed vs Salaried (%)
+Funding & Liquidity Metrics 💰
+Debt-to-Equity Ratio
