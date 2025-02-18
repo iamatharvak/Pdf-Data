@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const FileUpload = () => {
@@ -22,14 +22,13 @@ const FileUpload = () => {
 
     try {
       const response = await axios.post(
-        "https://pdf-data-mocha.vercel.app/api/upload",
+        "http://localhost:5000/upload",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      console.log("here", response);
-      setTableData(response.data.data);
-      console.log(response.data.data);
-      console.log(tableData);
+
+      console.log("Response:", response);
+      setTableData(response.data); // ✅ Corrected
       setError("");
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -46,12 +45,9 @@ const FileUpload = () => {
     }
 
     try {
-      const response = await axios.get(
-        "https://pdf-data-mocha.vercel.app/api/download",
-        {
-          responseType: "blob",
-        }
-      );
+      const response = await axios.get("http://localhost:3000/download", {
+        responseType: "blob",
+      });
 
       console.log("Response:", response);
       if (response.status === 200 && response.data) {
@@ -71,16 +67,14 @@ const FileUpload = () => {
     }
   };
 
-  const renderTable = () => {
-    if (
-      !tableData ||
-      !tableData[0] ||
-      !tableData[0].columns ||
-      !tableData[0].rows
-    )
-      return null;
+  useEffect(() => {
+    console.log("Updated Table Data:", tableData); // ✅ Logs only after state updates
+  }, [tableData]);
 
-    const { columns, rows } = tableData[0];
+  const renderTable = () => {
+    if (!tableData || !tableData.columns || !tableData.rows) return null;
+
+    const { columns, rows } = tableData;
 
     return (
       <table border="1">

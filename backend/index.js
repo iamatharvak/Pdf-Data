@@ -6,6 +6,7 @@ const cors = require("cors");
 const XLSX = require("xlsx");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
+const PORT = 5000;
 
 const apikey = process.env.API_KEY;
 const app = express();
@@ -14,7 +15,7 @@ const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.use(
   cors({
-    origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
+    origin: ["http://localhost:3000", "https://pdf-data-xlwv.vercel.app"],
     methods: ["GET", "POST"],
   })
 );
@@ -22,18 +23,16 @@ app.use(
 let extractedDataCache = null;
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app"
-  );
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   try {
-    console.log(req.file);
-    const fileBuffer = req.file.buffer;
+    // console.log(req.file);
+    const filePath = req.file.path;
     const query = req.body.query;
+    const pdfBuffer = fs.readFileSync(filePath);
 
-    const pdfBuffer = fs.readFileSync(fileBuffer);
+    // const pdfBuffer = fs.readFileSync(fileBuffer);
     const pdfData = await pdfParse(pdfBuffer);
 
     const prompt = `
@@ -50,22 +49,22 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     // Log raw response for debugging
     const rawResponse = result.response.text();
-    console.log("Raw Model Response:", rawResponse);
+    // console.log("Raw Model Response:", rawResponse);
 
     const cleanedResponse = rawResponse
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-    console.log("Cleaned Response:", cleanedResponse);
+    // console.log("Cleaned Response:", cleanedResponse);
 
     const jsonResponse = JSON.parse(cleanedResponse);
-    console.log("Parsed JSON Response:", jsonResponse);
+    // console.log("Parsed JSON Response:", jsonResponse);
 
     res.json(jsonResponse);
     extractedDataCache = jsonResponse;
   } catch (error) {
-    console.error("Error processing the request:", error);
+    // console.error("Error processing the request:", error);
     res.status(500).send("Error processing the file.");
   }
 });
@@ -103,6 +102,8 @@ app.get("/download", (req, res) => {
     res.status(500).send("Error generating Excel file.");
   }
 });
+
+app.listen(PORT, console.log(`Server started to run on ${PORT}`));
 
 // function parsePDFContent(pdfText) {
 //   const lines = pdfText.split("\n");
