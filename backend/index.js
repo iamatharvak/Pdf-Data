@@ -14,11 +14,9 @@ const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.use(
   cors({
-    origin: [
-      "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-      "http://localhost:3000",
-    ],
-    methods: ["GET", "POST"],
+    origin: "*", 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

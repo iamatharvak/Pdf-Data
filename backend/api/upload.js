@@ -4,6 +4,14 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const cors = require("cors");
 
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 // Define allowed origins
 // const allowedOrigins = [
 //   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
@@ -38,11 +46,8 @@ const allowedOrigins = [
   "http://localhost:3000",
 ];
 module.exports = (req, res) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    // res.setHeader("Access-Control-Allow-Credentials", "true");
-  }
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  // res.setHeader("Access-Control-Allow-Credentials", "true");
 
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
