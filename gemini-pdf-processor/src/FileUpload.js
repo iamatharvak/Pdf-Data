@@ -27,11 +27,11 @@ const FileUpload = () => {
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+            // Authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
           },
         }
       );
-      console.log(process.env.REACT_APP_API_KEY);
+      // console.log(process.env.REACT_APP_API_KEY);
       console.log("here", response);
       setTableData(response.data.data);
       console.log(response.data.data);
@@ -53,7 +53,7 @@ const FileUpload = () => {
 
     try {
       const response = await axios.get(
-        "https://pdf-data-mocha.vercel.app/api/download",
+        "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/download",
         {
           responseType: "blob",
         }
