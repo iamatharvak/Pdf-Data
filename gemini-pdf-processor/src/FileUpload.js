@@ -33,7 +33,7 @@ const handleFileRequest = async (
   setLoading(true);
   try {
     const response = await axios.post(
-      "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/upload",
+      "https://pdf-data-mocha.vercel.app/api/upload",
       formData
     );
     setResultData(response.data);
@@ -128,7 +128,7 @@ const FileUpload = () => {
     }
 
     handleFileRequest(
-      "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/upload",
+      "https://pdf-data-mocha.vercel.app/api/upload",
       formData,
       setLoading,
       setSnackbarMessage,

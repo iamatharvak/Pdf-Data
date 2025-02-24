@@ -16,10 +16,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 app.use(
   cors({
-    origin: [
-      "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-      "http://localhost:3000",
-    ],
+    origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
   })
 );
@@ -33,7 +30,7 @@ let extractedDataCache = null;
 app.post("/upload", upload.single("file"), async (req, res) => {
   res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app"
+    "https://pdf-data-xlwv.vercel.app"
   );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
