@@ -128,7 +128,7 @@ const FileUpload = () => {
     }
 
     handleFileRequest(
-      "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/upload",
+      "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/upload",
       formData,
       setLoading,
       setSnackbarMessage,
