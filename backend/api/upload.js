@@ -11,60 +11,14 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 let extractedDataCache = null;
 const allowedOrigins = [
-  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+  "https://pdf-data-xlwv.vercel.app",
   "http://localhost:3000",
 ];
-
-// app.use(
-//   cors({
-//     origin: function (origin, callback) {
-//       if (!origin || allowedOrigins.includes(origin)) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//     credentials: true,
-//   })
-// );
-
-// Define allowed origins
-// const allowedOrigins = [
-//   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-//   "http://localhost:3000",
-// ];
-
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-//   methods: "GET, POST, OPTIONS",
-//   allowedHeaders: "Content-Type, Authorization",
-// };
-
-// app.use(cors(corsOptions));
-
-// app.options("*", cors(corsOptions));
-
-// const allowedOrigins = [
-//   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-//   "http://localhost:3000",
-// ];
 module.exports = (req, res) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  // res.setHeader("Access-Control-Allow-Origin", origin);
-  // res.setHeader("Access-Control-Allow-Credentials", "true");
-
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
