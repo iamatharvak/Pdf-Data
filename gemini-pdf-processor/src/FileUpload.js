@@ -125,7 +125,7 @@ const FileUpload = () => {
     }
 
     handleFileRequest(
-      "http://localhost:5000/upload",
+      "http://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/upload",
       formData,
       setLoading,
       setSnackbarMessage,
@@ -144,7 +144,7 @@ const FileUpload = () => {
     files.forEach((file) => formData.append("file", file));
 
     handleFileRequest(
-      "http://localhost:5000/compare",
+      "http://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/compare",
       formData,
       setLoading,
       setSnackbarMessage,
