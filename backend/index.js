@@ -39,7 +39,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       selectedMetrics = [];
     }
 
-    // Enforce mutual exclusivity
     if (
       (query && selectedMetrics.length > 0) ||
       (!query && selectedMetrics.length === 0)
@@ -58,16 +57,16 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     let response = {};
 
-    // Handle Metrics Only
     if (selectedMetrics.length > 0) {
       const prompt = `
         PDF Content: ${pdfText}
         Instruction: Extract the following financial metrics from the PDF content: ${selectedMetrics.join(
           ", "
         )}. 
-        Present the extracted data in a JSON format with two keys:
-          1. "columns": An array including "Metric", "Value", and "YoY" (year-on-year change if available).
-          2. "rows": A 2D array where each sub-array represents a row of data for the specified metrics.
+        Extract the requested financial data from the PDF content provided .Present the extracted data in a JSON format with two keys:
+          1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
+          2. "rows": A 2D array where each sub-array represents a row of data.
+            Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
       `;
 
       const result = await model.generateContent(prompt);
@@ -81,7 +80,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       try {
         jsonResponse = JSON.parse(rawResponse);
         if (jsonResponse.columns && jsonResponse.rows) {
-          response.query = jsonResponse; 
+          response.query = jsonResponse;
         } else {
           response.query = {
             text: "Unable to extract metrics in table format.",
@@ -92,7 +91,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       }
     }
 
-    // Handle Query Only
     if (query) {
       let prompt;
       if (query.toLowerCase().includes("table")) {
@@ -105,7 +103,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
             Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
         `;
       } else {
-       
         prompt = `
           PDF Content: ${pdfText}
           User Query: ${query}
