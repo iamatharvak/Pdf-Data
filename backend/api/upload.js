@@ -8,7 +8,7 @@ const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
 const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+          
 let extractedDataCache = null;
 const allowedOrigins = [
   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
