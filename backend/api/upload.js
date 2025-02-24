@@ -56,7 +56,7 @@ module.exports = (req, res) => {
           );
       }
 
-      const pdfBuffer = fs.readFileSync(filePath);
+      const pdfBuffer = req.file.buffer;
       const pdfData = await pdfParse(pdfBuffer);
       const pdfText = pdfData.text;
 

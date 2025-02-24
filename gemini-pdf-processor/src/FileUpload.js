@@ -102,7 +102,7 @@ const FileUpload = () => {
     );
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (files.length === 0) {
       setError("Please upload a PDF.");
       return;
