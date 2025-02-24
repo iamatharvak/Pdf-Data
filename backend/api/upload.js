@@ -14,7 +14,12 @@ const allowedOrigins = [
   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
   "http://localhost:3000",
 ];
-module.exports = (req, res) => {
+const corsOptions = {
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+};
+module.exports = cors(corsOptions)(async (req, res) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
@@ -151,4 +156,4 @@ module.exports = (req, res) => {
       res.status(500).send("Error processing the file.");
     }
   });
-};
+});
