@@ -32,7 +32,10 @@ const handleFileRequest = async (
 ) => {
   setLoading(true);
   try {
-    const response = await axios.post(url, formData);
+    const response = await axios.post(
+      "https://pdf-data-git-main-v2-iamatharvaks-projects.vercel.app/api/upload",
+      formData
+    );
     setResultData(response.data);
     setSnackbarMessage("Operation successful!");
   } catch (error) {
