@@ -23,10 +23,10 @@ app.use(
     methods: ["GET", "POST"],
   })
 );
-const allowedOrigins = [
-  "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
-  "http://localhost:3000",
-];
+// const allowedOrigins = [
+//   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+//   "http://localhost:3000",
+// ];
 
 let extractedDataCache = null;
 
