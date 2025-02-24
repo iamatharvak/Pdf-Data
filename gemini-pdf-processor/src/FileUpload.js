@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Typography,
-  TextField,
   CircularProgress,
   Alert,
   Snackbar,
@@ -13,20 +12,48 @@ import {
   IconButton,
   Checkbox,
   FormControlLabel,
+  Input,
+  ToggleButtonGroup,
+  ToggleButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+
+const handleFileRequest = async (
+  url,
+  formData,
+  setLoading,
+  setSnackbarMessage,
+  setError,
+  setResultData
+) => {
+  setLoading(true);
+  try {
+    const response = await axios.post(url, formData);
+    setResultData(response.data);
+    setSnackbarMessage("Operation successful!");
+  } catch (error) {
+    setError(error.response?.data || "Error processing file. Try again.");
+    setSnackbarMessage("Error processing file. Try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
   const [selectedMetrics, setSelectedMetrics] = useState([]);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [tableData, setTableData] = useState(null);
-  const [metricsdata, setMetricsdata] = useState(null);
-  const [comparedata, setCompareData] = useState(null);
+  const [resultData, setResultData] = useState(null);
+  const [query, setQuery] = useState("");
+  const [queryType, setQueryType] = useState(null);
+  const [selectedYear, setSelectedYear] = useState("");
 
   const metrics = [
     "AUM",
@@ -49,6 +76,21 @@ const FileUpload = () => {
     }
   };
 
+  const handleQueryChange = (event) => {
+    setQuery(event.target.value);
+  };
+
+  const handleQueryTypeChange = (event, newValue) => {
+    if (newValue !== null) {
+      setQueryType(newValue);
+      if (newValue === "metrics") {
+        setQuery("");
+      } else if (newValue === "query") {
+        setSelectedMetrics([]);
+      }
+    }
+  };
+
   const handleRemoveFiles = (index) => {
     setFiles(files.filter((_, i) => i !== index));
   };
@@ -60,35 +102,39 @@ const FileUpload = () => {
     );
   };
 
-  const handleUpload = async () => {
-    if (files.length === 0 || selectedMetrics.length === 0) {
-      setError("Please upload a PDF and select metrics.");
+  const handleUpload = () => {
+    if (files.length === 0) {
+      setError("Please upload a PDF.");
+      return;
+    }
+    if (queryType === "metrics" && selectedMetrics.length === 0) {
+      setError("Please select at least one metric.");
+      return;
+    }
+    if (queryType === "query" && !query.trim()) {
+      setError("Please enter a query.");
       return;
     }
 
     const formData = new FormData();
     formData.append("file", files[0]);
-    formData.append("metrics", JSON.stringify(selectedMetrics));
-
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/upload",
-        formData
-      );
-      console.log("here", response);
-      setTableData(response.data.table);
-      setMetricsdata(response.data.metrics);
-      setSnackbarMessage("File uploaded successfully!");
-    } catch (error) {
-      setSnackbarMessage("Error processing file. Try again.");
-    } finally {
-      setOpenSnackbar(true);
-      setLoading(false);
+    if (queryType === "metrics") {
+      formData.append("metrics", JSON.stringify(selectedMetrics));
+    } else if (queryType === "query") {
+      formData.append("query", query);
     }
+
+    handleFileRequest(
+      "http://localhost:5000/upload",
+      formData,
+      setLoading,
+      setSnackbarMessage,
+      setError,
+      setResultData
+    );
   };
 
-  const handleCompare = async () => {
+  const handleCompare = () => {
     if (files.length !== 2) {
       setError("Upload exactly two PDFs for comparison.");
       return;
@@ -97,54 +143,94 @@ const FileUpload = () => {
     const formData = new FormData();
     files.forEach((file) => formData.append("file", file));
 
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/compare",
-        formData
-      );
-      const { differences, table1, table2 } = response.data;
-      setCompareData({ differences, table1, table2 });
-      setSnackbarMessage("Comparison successful!");
-    } catch (error) {
-      setSnackbarMessage("Error comparing PDFs. Try again.");
-    } finally {
-      setOpenSnackbar(true);
-      setLoading(false);
-    }
+    handleFileRequest(
+      "http://localhost:5000/compare",
+      formData,
+      setLoading,
+      setSnackbarMessage,
+      setError,
+      setResultData
+    );
   };
 
-  const renderParagraph = () => {
-    if (tableData && tableData.paragraph) {
-      return <pre>{tableData.paragraph}</pre>;
-    }
-    return null;
+  const getUniqueYears = (data) => {
+    if (!data || !data.query || !data.query.rows) return [];
+    const yearIndex = data.query.columns.indexOf("Year");
+    if (yearIndex === -1) return [];
+    return [...new Set(data.query.rows.map((row) => row[yearIndex]))];
   };
 
-  const renderTable = () => {
-    if (!tableData || !tableData.columns || !tableData.rows) return null;
+  const renderTable = (data) => {
+    if (!data || (!data.metrics && !data.query))
+      return <p>No data available</p>;
 
-    const { columns, rows } = tableData;
+    if (data.query) {
+      if (data.query.columns && data.query.rows) {
+        const yearIndex = data.query.columns.indexOf("Year");
+        const filteredRows =
+          selectedYear && yearIndex !== -1
+            ? data.query.rows.filter((row) => row[yearIndex] === selectedYear)
+            : data.query.rows;
 
+        return (
+          <div style={{ overflow: "auto" }}>
+            <table
+              border="1"
+              style={{ width: "100%", borderCollapse: "collapse" }}
+            >
+              <thead>
+                <tr>
+                  {data.query.columns.map((col, index) => (
+                    <th key={index}>{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <td key={cellIndex}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      if (data.query.text) {
+        return <p>{data.query.text}</p>;
+      }
+    }
+
+    return <p>No data available</p>;
+  };
+
+  const CompareResult = ({ compareData }) => {
+    const { differences, table1, table2 } = compareData;
     return (
-      <table border="1">
-        <thead>
-          <tr>
-            {columns.map((col, index) => (
-              <th key={index}>{col}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                <td key={cellIndex}>{cell}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div>
+        <h3>Differences:</h3>
+        <p>{differences}</p>
+        <div style={{ display: "flex", gap: "20px", overflowX: "auto" }}>
+          <div style={{ width: "45%" }}>
+            <h4>Table 1 Data</h4>
+            {table1 ? (
+              renderTable({ metrics: table1 })
+            ) : (
+              <p>No data available for Table 1</p>
+            )}
+          </div>
+          <div style={{ width: "45%" }}>
+            <h4>Table 2 Data</h4>
+            {table2 ? (
+              renderTable({ metrics: table2 })
+            ) : (
+              <p>No data available for Table 2</p>
+            )}
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -172,7 +258,7 @@ const FileUpload = () => {
       />
       <label htmlFor="fileInput">
         <Button variant="contained" component="span" fullWidth>
-          Upload PDF
+          {files.length < 1 ? "Upload PDF" : "Upload More PDF"}
         </Button>
       </label>
 
@@ -196,30 +282,65 @@ const FileUpload = () => {
       {files.length === 1 && (
         <>
           <Typography variant="h6" sx={{ marginTop: 2 }}>
-            Select Financial Metrics:
+            Choose a method to extract data:
           </Typography>
-          <Box sx={{ marginBottom: 2 }}>
-            {metrics.map((metric, index) => (
-              <FormControlLabel
-                key={index}
-                control={
-                  <Checkbox
-                    value={metric}
-                    checked={selectedMetrics.includes(metric)}
-                    onChange={handleMetricChange}
+
+          <ToggleButtonGroup
+            value={queryType}
+            exclusive
+            onChange={handleQueryTypeChange}
+            sx={{ marginBottom: 2, display: "flex", justifyContent: "center" }}
+          >
+            <ToggleButton value="metrics">Select Metrics</ToggleButton>
+            <ToggleButton value="query">Enter Query</ToggleButton>
+          </ToggleButtonGroup>
+
+          {queryType === "metrics" && (
+            <>
+              <Typography variant="h6">Select Financial Metrics:</Typography>
+              <Box sx={{ marginBottom: 2 }}>
+                {metrics.map((metric, index) => (
+                  <FormControlLabel
+                    key={index}
+                    control={
+                      <Checkbox
+                        value={metric}
+                        checked={selectedMetrics.includes(metric)}
+                        onChange={handleMetricChange}
+                      />
+                    }
+                    label={metric}
                   />
-                }
-                label={metric}
+                ))}
+              </Box>
+            </>
+          )}
+
+          {queryType === "query" && (
+            <>
+              <Typography variant="h6">Enter Query:</Typography>
+              <Input
+                id="queryInput"
+                type="text"
+                placeholder="e.g., List all expenses"
+                value={query}
+                onChange={handleQueryChange}
+                fullWidth
+                sx={{ marginBottom: 2 }}
               />
-            ))}
-          </Box>
+            </>
+          )}
 
           <Button
             variant="contained"
             color="primary"
             onClick={handleUpload}
             fullWidth
-            disabled={loading || selectedMetrics.length === 0}
+            disabled={
+              loading ||
+              (queryType === "metrics" && selectedMetrics.length === 0) ||
+              (queryType === "query" && !query.trim())
+            }
             sx={{ marginTop: 2 }}
           >
             {loading ? <CircularProgress size={24} /> : "Upload & Query"}
@@ -260,48 +381,35 @@ const FileUpload = () => {
         </Alert>
       </Snackbar>
 
-      {tableData ? (
-        <>
-          {renderTable()}
-          {renderParagraph()}
-          <button onClick={""}>Download Excel</button>
-        </>
-      ) : (
-        <p>No data to display</p>
+      {resultData && files.length === 1 && resultData.data && (
+        <Box sx={{ marginTop: 2 }}>
+          <Typography variant="h6">Results:</Typography>
+          {resultData.data[0].query && resultData.data[0].query.columns && (
+            <FormControl fullWidth sx={{ marginBottom: 2 }}>
+              <InputLabel id="year-select-label">Select Year</InputLabel>
+              <Select
+                labelId="year-select-label"
+                value={selectedYear}
+                label="Select Year"
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                <MenuItem value="">All Years</MenuItem>
+                {getUniqueYears(resultData.data[0]).map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          {renderTable(resultData.data[0])}
+        </Box>
       )}
-
-      {comparedata && (
-        <>
-          <div>
-            <h3>Differences:</h3>
-            <pre>{comparedata.differences}</pre>
-            <h3>Table 1 Data:</h3>
-            <pre>{JSON.stringify(comparedata.table1, null, 2)}</pre>
-            <h3>Table 2 Data:</h3>
-            <pre>{JSON.stringify(comparedata.table2, null, 2)}</pre>
-          </div>
-        </>
-      )}
-
-      {metricsdata && selectedMetrics.length > 0 && (
-        <>
-          <div>
-            <h4>Selected Metrics Data:</h4>
-            <ul>
-              {selectedMetrics.map((metric) => {
-                if (metricsdata[metric]) {
-                  return (
-                    <li key={metric}>
-                      <strong>{metric}: </strong>
-                      {metricsdata[metric]}
-                    </li>
-                  );
-                }
-                return null;
-              })}
-            </ul>
-          </div>
-        </>
+      {resultData && files.length === 2 && (
+        <Box sx={{ marginTop: 2 }}>
+          <Typography variant="h6">Comparison Results:</Typography>
+          <CompareResult compareData={resultData} />
+        </Box>
       )}
     </Box>
   );

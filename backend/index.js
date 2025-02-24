@@ -28,120 +28,122 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   try {
-    console.log(req.body);
     const filePath = req.file.path;
-
     const query = req.body.query || "";
     let selectedMetrics = req.body.metrics || [];
-    console.log(req.body.metrics);
 
     if (typeof selectedMetrics === "string") {
       selectedMetrics = JSON.parse(selectedMetrics);
     }
+    if (!Array.isArray(selectedMetrics)) {
+      selectedMetrics = [];
+    }
 
-    // if (!Array.isArray(selectedMetrics)) {
-    //   selectedMetrics = [];
-    // }
+    // Enforce mutual exclusivity
+    if (
+      (query && selectedMetrics.length > 0) ||
+      (!query && selectedMetrics.length === 0)
+    ) {
+      fs.unlinkSync(filePath);
+      return res
+        .status(400)
+        .send(
+          "Please provide either a query or selected metrics, but not both or neither."
+        );
+    }
+
     const pdfBuffer = fs.readFileSync(filePath);
     const pdfData = await pdfParse(pdfBuffer);
+    const pdfText = pdfData.text;
 
-    let prompt;
+    let response = {};
 
-    if (
-      query.toLowerCase().includes("summarize") ||
-      query.toLowerCase().includes("describe")
-    ) {
-      prompt = ` 
-      PDF Content: ${pdfData.text}
-      
-      User Query: ${query}
-
-      Instruction: Please summarize or describe the content of the PDF in a detailed paragraph.
-      `;
-    } else {
-      prompt = ` 
-      PDF Content: ${pdfData.text}
-
-      User Query: ${query}
-
-      Instruction: Extract the relevant data from the PDF content in a structured table format. Present the extracted data in a JSON format with two keys:
-      1. "columns": An array of column names for the table.
-      2. "rows": A 2D array where each sub-array represents a row of data.
-      `;
-    }
-
-    const result = await model.generateContent(prompt);
-    const rawResponse = result.response.text();
-    const cleanedResponse = rawResponse
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    let jsonResponse;
-    let paragraphResponse = "";
-    let tableResponse = {};
-
-    try {
-      jsonResponse = JSON.parse(cleanedResponse);
-      if (jsonResponse.columns && jsonResponse.rows) {
-        tableResponse = jsonResponse;
-      }
-    } catch (e) {
-      paragraphResponse = cleanedResponse;
-    }
-
-    let extractedMetrics = {};
-    const financialMetrics = [
-      "AUM",
-      "Disbursement Value",
-      "Total Income",
-      "NIM",
-      "Profit After Tax (PAT)",
-      "ROA",
-      "ROE",
-      "Operating Expenses",
-      "GNPA & NNPA",
-      "DPD Buckets",
-      "Provision Coverage Ratio (PCR)",
-      "Write-offs (%)",
-    ];
-
+    // Handle Metrics Only
     if (selectedMetrics.length > 0) {
-      const pdfText = pdfData.text;
+      const prompt = `
+        PDF Content: ${pdfText}
+        Instruction: Extract the following financial metrics from the PDF content: ${selectedMetrics.join(
+          ", "
+        )}. 
+        Present the extracted data in a JSON format with two keys:
+          1. "columns": An array including "Metric", "Value", and "YoY" (year-on-year change if available).
+          2. "rows": A 2D array where each sub-array represents a row of data for the specified metrics.
+      `;
 
-      selectedMetrics.forEach((metric) => {
-        if (financialMetrics.includes(metric)) {
-          const regex = new RegExp(
-            `${metric}[^\\d]*(\\p{Sc}*\\d{1,3}(?:[\\d,]{3})*(?:\\.\\d+)?\\s*(?:Mn|B|K)?)`,
-            "iu"
-          );
-          const match = pdfText.match(regex);
-          if (match) {
-            extractedMetrics[metric] = match[1].trim();
-          }
+      const result = await model.generateContent(prompt);
+      const rawResponse = result.response
+        .text()
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+      let jsonResponse;
+      try {
+        jsonResponse = JSON.parse(rawResponse);
+        if (jsonResponse.columns && jsonResponse.rows) {
+          response.query = jsonResponse; 
+        } else {
+          response.query = {
+            text: "Unable to extract metrics in table format.",
+          };
         }
-      });
-    }
-    const filteredMetrics = {};
-    selectedMetrics.forEach((metric) => {
-      if (extractedMetrics[metric]) {
-        filteredMetrics[metric] = extractedMetrics[metric];
+      } catch (e) {
+        response.query = { text: "Error parsing metrics data." };
       }
-    });
+    }
 
-    const response = {
-      paragraph: paragraphResponse || "No paragraph content found.",
-      table: tableResponse || "No table content found.",
-      metrics: filteredMetrics,
+    // Handle Query Only
+    if (query) {
+      let prompt;
+      if (query.toLowerCase().includes("table")) {
+        prompt = `
+          PDF Content: ${pdfText}
+          User Query: ${query}
+          Instruction: Extract the requested financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
+            1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
+            2. "rows": A 2D array where each sub-array represents a row of data.
+            Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
+        `;
+      } else {
+       
+        prompt = `
+          PDF Content: ${pdfText}
+          User Query: ${query}
+          Instruction: Respond to the user's query by providing a detailed paragraph based on the PDF content. If specific data is requested and not directly available, calculate it if possible using the available data and explain the process in the paragraph.
+          Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
+        `;
+      }
+
+      const result = await model.generateContent(prompt);
+      const rawResponse = result.response
+        .text()
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+      let jsonResponse;
+      try {
+        jsonResponse = JSON.parse(rawResponse);
+        if (jsonResponse.columns && jsonResponse.rows) {
+          response.query = jsonResponse;
+        } else {
+          response.query = { text: rawResponse };
+        }
+      } catch (e) {
+        response.query = { text: rawResponse };
+      }
+    }
+
+    const finalResponse = {
+      data: [response],
+      query: query || null,
+      metrics: selectedMetrics.length > 0 ? selectedMetrics : null,
     };
 
-    extractedDataCache = {
-      paragraph: paragraphResponse,
-      table: tableResponse,
-      metrics: extractedMetrics,
-    };
+    extractedDataCache = response;
+    fs.unlinkSync(filePath);
 
-    res.json(response);
+    res.json(finalResponse);
   } catch (error) {
     console.error("Error processing the request:", error);
     res.status(500).send("Error processing the file.");
@@ -210,14 +212,36 @@ app.post("/compare", upload.array("file", 2), async (req, res) => {
     const result = await model.generateContent(prompt);
 
     const rawResponse = result.response.text();
-    const cleanedResponse = rawResponse
+    console.log("Raw response:", rawResponse);
+
+    // Clean the response by removing code block markers and extra spaces
+    let cleanedResponse = rawResponse
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
+    cleanedResponse = cleanedResponse.replace(/[^a-zA-Z0-9\s{}[\],":.-]/g, "");
 
-    const jsonResponse = JSON.parse(cleanedResponse);
+    function isValidJson(str) {
+      try {
+        JSON.parse(str);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
 
-    res.json(jsonResponse);
+    try {
+      if (isValidJson(cleanedResponse)) {
+        const jsonResponse = JSON.parse(cleanedResponse);
+        res.json(jsonResponse);
+      } else {
+        console.error("Invalid JSON format after cleaning.");
+        res.status(500).send("Error: Invalid JSON response format.");
+      }
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      res.status(500).send("Error processing the file.");
+    }
   } catch (error) {
     console.error("Error processing the comparison:", error);
     res.status(500).send("Error processing the file.");
