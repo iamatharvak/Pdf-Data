@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  upload.array("file")(req, res, async (err) => {
+  upload.array("file", 2)(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
       return res.status(500).send("Error uploading files.");
@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
           );
       }
 
-      const pdfBuffer = req.file.buffer;
+      const pdfBuffer = req.files[0].buffer;
       const pdfData = await pdfParse(pdfBuffer);
       const pdfText = pdfData.text;
 
