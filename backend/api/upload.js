@@ -40,7 +40,6 @@ module.exports = async (req, res) => {
     }
 
     try {
-      const filePath = req.file.path;
       const query = req.body.query || "";
       let selectedMetrics = req.body.metrics || [];
 
@@ -55,7 +54,6 @@ module.exports = async (req, res) => {
         (query && selectedMetrics.length > 0) ||
         (!query && selectedMetrics.length === 0)
       ) {
-        fs.unlinkSync(filePath);
         return res
           .status(400)
           .send(
@@ -150,8 +148,6 @@ module.exports = async (req, res) => {
       };
 
       extractedDataCache = response;
-      fs.unlinkSync(filePath);
-
       res.json(finalResponse);
     } catch (error) {
       console.error("Error processing request:", error);
