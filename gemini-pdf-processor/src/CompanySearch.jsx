@@ -15,7 +15,7 @@ const CompanyReports = () => {
     setError("");
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/getCompanyReports?companyName=${companyName}`
+        `https://pdf-data-mocha.vercel.app/api/getCompanyReports?companyName=${companyName}`
       );
       setReports(response.data.reports);
       console.log(response);

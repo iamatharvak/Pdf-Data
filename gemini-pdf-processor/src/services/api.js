@@ -1,5 +1,5 @@
 import axios from "axios";
-const FILE_API_URL = "http://localhost:5000";
+const FILE_API_URL = "https://pdf-data-mocha.vercel.app/api";
 
 export const uploadAndQueryFile = async (file, queryData) => {
   const formData = new FormData();
