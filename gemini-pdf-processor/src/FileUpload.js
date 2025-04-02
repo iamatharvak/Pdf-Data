@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Box,
@@ -19,8 +19,12 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const handleFileRequest = async (
   url,
@@ -44,6 +48,7 @@ const handleFileRequest = async (
 };
 
 const FileUpload = () => {
+  const [symbol, setSymbol] = useState("AAPL");
   const [files, setFiles] = useState([]);
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,21 +59,27 @@ const FileUpload = () => {
   const [query, setQuery] = useState("");
   const [queryType, setQueryType] = useState(null);
   const [selectedYear, setSelectedYear] = useState("");
+  const [balanceSheet, setBalanceSheet] = useState(null);
+  const API_KEY = "6DMS7QNAQ4I7S0B9";
+  const SYMBOL = "AAPL";
 
-  const metrics = [
-    "AUM",
-    "Disbursement Value",
-    "Total Income",
-    "NIM (Net Interest Margin)",
-    "Profit After Tax (PAT)",
-    "ROA (Return on Assets)",
-    "ROE (Return on Equity)",
-    "Operating Expenses",
-    "GNPA & NNPA (%)",
-    "DPD Buckets (30, 60, 90+)",
-    "Provision Coverage Ratio (PCR)",
-    "Write-offs (%)",
-  ];
+  const metrics = {
+    "Business Metrics": [
+      "AUM (mn)",
+      "Disbursement",
+      "Number of Branches",
+      "Number of States & UT",
+    ],
+    "Granular Metrics": [
+      "Number of Live Accounts",
+      "Average Ticket Size",
+      "Number of Employees",
+    ],
+    "Yield & Spread Metrics": ["Yield", "Cost of Fund", "Spread", "NIM %"],
+    "Quality Metrics": ["GNPA", "NNPA"],
+    "Profitability Metrics": ["ROA", "ROE", "PAT"],
+    "Liability Profile": ["Floating", "Fixed", "Equity"],
+  };
 
   const handleFileChange = (event) => {
     if (files.length < 2) {
@@ -79,6 +90,25 @@ const FileUpload = () => {
   const handleQueryChange = (event) => {
     setQuery(event.target.value);
   };
+
+  useEffect(() => {
+    const fetchBalanceSheet = async () => {
+      try {
+        const response = await axios.get("https://www.alphavantage.co/query", {
+          params: {
+            function: "OVERVIEW",
+            symbol: SYMBOL,
+            apikey: API_KEY,
+          },
+        });
+        setBalanceSheet(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching balance sheet:", error);
+      }
+    };
+    fetchBalanceSheet();
+  }, []);
 
   const handleQueryTypeChange = (event, newValue) => {
     if (newValue !== null) {
@@ -262,6 +292,34 @@ const FileUpload = () => {
         </Button>
       </label>
 
+      <div>
+        <h2>Balance Sheet Data for {SYMBOL}</h2>
+        {balanceSheet && balanceSheet.annualReports ? (
+          <table border="1">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Total Assets</th>
+                <th>Total Liabilities</th>
+                <th>Shareholder Equity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {balanceSheet.annualReports.map((report, index) => (
+                <tr key={index}>
+                  <td>{report.fiscalDateEnding}</td>
+                  <td>{report.totalAssets}</td>
+                  <td>{report.totalLiabilities}</td>
+                  <td>{report.totalShareholderEquity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>Loading...</p>
+        )}
+      </div>
+
       {files.length > 0 && (
         <List>
           {files.map((file, index) => (
@@ -299,18 +357,27 @@ const FileUpload = () => {
             <>
               <Typography variant="h6">Select Financial Metrics:</Typography>
               <Box sx={{ marginBottom: 2 }}>
-                {metrics.map((metric, index) => (
-                  <FormControlLabel
-                    key={index}
-                    control={
-                      <Checkbox
-                        value={metric}
-                        checked={selectedMetrics.includes(metric)}
-                        onChange={handleMetricChange}
-                      />
-                    }
-                    label={metric}
-                  />
+                {Object.entries(metrics).map(([category, metrics], index) => (
+                  <Accordion key={index}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>{category}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {metrics.map((metric, i) => (
+                        <FormControlLabel
+                          key={i}
+                          control={
+                            <Checkbox
+                              value={metric}
+                              checked={selectedMetrics.includes(metric)}
+                              onChange={handleMetricChange}
+                            />
+                          }
+                          label={metric}
+                        />
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
                 ))}
               </Box>
             </>
