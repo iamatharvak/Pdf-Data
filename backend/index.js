@@ -16,23 +16,37 @@ const app = express();
 const upload = multer({ dest: "uploads/" });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 const { promisify } = require("util");
 const { generateKey } = require("crypto");
 const writeFileAsync = promisify(fs.writeFile);
 const unlinkAsync = promisify(fs.unlink);
 const tempDir = path.join(__dirname, "temp");
+
+
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://pdf-data-xlwv.vercel.app"],
+    origin: ["https://pdf-data-xlwv.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
   })
 );
+
 app.use(express.json());
+
+// const allowedOrigins = [
+//   "https://pdf-data-xlwv-git-main-v2-iamatharvaks-projects.vercel.app",
+//   "http://localhost:3000",
+// ];
+
 
 let extractedDataCache = null;
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://pdf-data-xlwv.vercel.app"
+  );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -151,7 +165,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     res.json(finalResponse);
   } catch (error) {
-    console.error("Error processing the request:", error);
+    console.error("Error processing request:", error);
     res.status(500).send("Error processing the file.");
   }
 });
