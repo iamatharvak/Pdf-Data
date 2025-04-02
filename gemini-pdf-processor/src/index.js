@@ -2,12 +2,21 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 // import reportWebVitals from "./reportWebVitals";
-import FileUpload from "./FileUpload";
+// import FileUpload from "./FileUpload";
+// import CompanyReports from "./CompanyReports";
+// import CompanySearch from "./CompanySearch";
+// import FileUpload from "./components/common/FileUpload";
+import { BrowserRouter } from "react-router-dom";
+// import PDFUrlProcessor from "./components/common/PdfProcessor";
+import App from "./App";
+// PDFUrlProcessor
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <FileUpload />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
 
