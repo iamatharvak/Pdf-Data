@@ -2,14 +2,16 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 // import reportWebVitals from "./reportWebVitals";
-import FileUpload from "./FileUpload";
-import CompanyReports from "./CompanyReports";
-import CompanySearch from "./CompanySearch";
+// import FileUpload from "./FileUpload";
+// import CompanyReports from "./CompanyReports";
+// import CompanySearch from "./CompanySearch";
+import FileUpload from "./components/common/FileUpload";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     {/* <CompanySearch /> */}
+    {/* <FileUpload /> */}
     <FileUpload />
   </React.StrictMode>
 );
