@@ -18,6 +18,18 @@
     {
       "src": "/api/download",
       "dest": "/api/download.js"
+    },
+    {
+      "src": "/api/compare",
+      "dest": "/api/compare.js"
+    },
+    {
+      "src": "/api/getCompanyReports",
+      "dest": "/api/getCompanyReports.js"
+    },
+    {
+      "src": "/api/process-pdf-url",
+      "dest": "/api/process-pdf-url.js"
     }
   ]
 }
