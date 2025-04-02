@@ -3,17 +3,17 @@ import { useState, useEffect } from "react";
 import {
   // fetchBalanceSheet,
   uploadAndQueryFile,
-  // compareFiles,
+  compareFiles,
 } from "../services/api";
 
-export const useFinancialData = (files) => {
+export const useFinancialData = (files, selectedMetrics) => {
   const [symbol, setSymbol] = useState("AAPL");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [resultData, setResultData] = useState(null);
-  const [balanceSheet, setBalanceSheet] = useState(null);
+  // const [balanceSheet, setBalanceSheet] = useState(null);
 
   // useEffect(() => {
 
@@ -50,26 +50,26 @@ export const useFinancialData = (files) => {
     }
   };
 
-  // const handleCompare = async () => {
-  //   if (files.length !== 2) {
-  //     setError("Upload exactly two PDFs for comparison.");
-  //     return;
-  //   }
+  const handleCompare = async () => {
+    if (files.length !== 2) {
+      setError("Upload exactly two PDFs for comparison.");
+      return;
+    }
 
-  //   setLoading(true);
-  //   try {
-  //     const result = await compareFiles(files);
-  //     setResultData(result);
-  //     setSnackbarMessage("Comparison successful!");
-  //     setOpenSnackbar(true);
-  //   } catch (err) {
-  //     setError(err.response?.data || "Error comparing files. Try again.");
-  //     setSnackbarMessage("Error comparing files. Try again.");
-  //     setOpenSnackbar(true);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+    setLoading(true);
+    try {
+      const result = await compareFiles(files, selectedMetrics);
+      setResultData(result);
+      setSnackbarMessage("Comparison successful!");
+      setOpenSnackbar(true);
+    } catch (err) {
+      setError(err.response?.data || "Error comparing files. Try again.");
+      setSnackbarMessage("Error comparing files. Try again.");
+      setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     symbol,
@@ -80,8 +80,8 @@ export const useFinancialData = (files) => {
     setOpenSnackbar,
     snackbarMessage,
     resultData,
-    balanceSheet,
+    // balanceSheet,
     handleUpload,
-    // handleCompare,
+    handleCompare,
   };
 };

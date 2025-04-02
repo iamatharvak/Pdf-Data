@@ -5,14 +5,18 @@ import "./index.css";
 // import FileUpload from "./FileUpload";
 // import CompanyReports from "./CompanyReports";
 // import CompanySearch from "./CompanySearch";
-import FileUpload from "./components/common/FileUpload";
+// import FileUpload from "./components/common/FileUpload";
+import { BrowserRouter } from "react-router-dom";
+// import PDFUrlProcessor from "./components/common/PdfProcessor";
+import App from "./App";
+// PDFUrlProcessor
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    {/* <CompanySearch /> */}
-    {/* <FileUpload /> */}
-    <FileUpload />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
 

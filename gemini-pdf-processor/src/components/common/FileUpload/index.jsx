@@ -3,12 +3,16 @@ import { Box, Typography } from "@mui/material";
 import FileList from "./FileList";
 import QueryOptions from "./QueryOptions";
 import ResultsDisplay from "./ResultsDisplay";
-// import ComparisonDisplay from "./ComparisonDisplay";
+import ComparisonDisplay from "./ComparisonDisplay";
+// ComparisonMetricsSelector
 import { useFinancialData } from "../../../hooks/useFinancialData";
 import Notification from "../Notification";
+import ComparisonOptions from "./ComparisonOptions";
+import ComparisonMetricsSelector from "./ComparisonMetricsSelector";
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
+  const [selectedMetrics, setSelectedMetrics] = useState([]);
   const {
     loading,
     error,
@@ -17,8 +21,8 @@ const FileUpload = () => {
     setOpenSnackbar,
     resultData,
     handleUpload,
-    // handleCompare,
-  } = useFinancialData(files);
+    handleCompare,
+  } = useFinancialData(files, selectedMetrics);
 
   const handleFileChange = (event) => {
     if (files.length < 2) {
@@ -55,9 +59,20 @@ const FileUpload = () => {
         <QueryOptions loading={loading} onUpload={handleUpload} />
       )}
 
-      {/* {files.length === 2 && (
-        <ComparisonOptions loading={loading} onCompare={handleCompare} />
-      )} */}
+      {files.length === 2 && (
+        <>
+          {/* <ComparisonMetricsSelector
+            selectedMetrics={selectedMetrics}
+            onChange={setSelectedMetrics}
+          /> */}
+          <ComparisonOptions
+            loading={loading}
+            onCompare={handleCompare}
+            selectedMetrics={selectedMetrics}
+            onChange={setSelectedMetrics}
+          />
+        </>
+      )}
 
       <Notification
         open={openSnackbar}
@@ -70,9 +85,9 @@ const FileUpload = () => {
         <ResultsDisplay data={resultData.data[0]} />
       )}
 
-      {/* {resultData && files.length === 2 && (
+      {resultData && files.length === 2 && (
         <ComparisonDisplay compareData={resultData} />
-      )} */}
+      )}
     </Box>
   );
 };
