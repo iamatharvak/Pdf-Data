@@ -4,8 +4,9 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const cors = require("cors");
 
+const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
 const upload = multer({ storage: multer.memoryStorage() });
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash " });
 
 const allowedOrigins = [
