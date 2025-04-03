@@ -8,6 +8,18 @@
     {
       "src": "api/download.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "/api/compare.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "/api/getCompanyReports.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "/api/process-pdf-url.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
