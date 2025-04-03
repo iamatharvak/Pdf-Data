@@ -23,17 +23,17 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "PDF URL is required." });
     }
 
-    // 1️⃣ Download PDF from the URL
+    
     const response = await axios({
       url: pdfUrl,
       method: "GET",
       responseType: "arraybuffer",
     });
 
-    // 2️⃣ Extract text from the PDF
+    
     const pdfData = await pdfParse(Buffer.from(response.data));
 
-    // 3️⃣ Send extracted text to Gemini API
+    
     const prompt = `
       PDF Content: ${pdfData.text}
       
