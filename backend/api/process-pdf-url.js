@@ -23,17 +23,14 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "PDF URL is required." });
     }
 
-    
     const response = await axios({
       url: pdfUrl,
       method: "GET",
       responseType: "arraybuffer",
     });
 
-    
     const pdfData = await pdfParse(Buffer.from(response.data));
 
-    
     const prompt = `
       PDF Content: ${pdfData.text}
       

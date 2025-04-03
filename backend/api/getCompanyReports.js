@@ -2,6 +2,18 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 
 module.exports = async (req, res) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
   const companyName = req.query.companyName;
   if (!companyName) {
     return res.status(400).json({ error: "Company name is required" });
