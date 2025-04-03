@@ -50,7 +50,7 @@ export const useFinancialData = (files, selectedMetrics) => {
     }
   };
 
-  const handleCompare = async () => {
+  const handleCompare = async (selectedMetrics) => {
     if (files.length !== 2) {
       setError("Upload exactly two PDFs for comparison.");
       return;
