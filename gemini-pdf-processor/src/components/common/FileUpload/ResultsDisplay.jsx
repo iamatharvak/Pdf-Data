@@ -19,6 +19,7 @@ const ResultsDisplay = ({ data }) => {
   };
 
   const renderTable = (data) => {
+    console.log(data);
     if (!data || (!data.metrics && !data.query))
       return <p>No data available</p>;
 

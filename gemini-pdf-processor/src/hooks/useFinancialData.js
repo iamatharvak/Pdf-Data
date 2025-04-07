@@ -38,7 +38,8 @@ export const useFinancialData = (files, selectedMetrics) => {
     setLoading(true);
     try {
       const result = await uploadAndQueryFile(files[0], queryData);
-      setResultData(result);
+      console.log(result.data);
+      setResultData(result.data[0]);
       setSnackbarMessage("Operation successful!");
       setOpenSnackbar(true);
     } catch (err) {
@@ -58,7 +59,12 @@ export const useFinancialData = (files, selectedMetrics) => {
 
     setLoading(true);
     try {
+      console.log(selectedMetrics, "metrics");
       const result = await compareFiles(files, selectedMetrics);
+      console.log(files, "file");
+      console.log(selectedMetrics, "metrics");
+      console.log(result, "rsults");
+      console.log(result.data, "rsults data");
       setResultData(result);
       setSnackbarMessage("Comparison successful!");
       setOpenSnackbar(true);

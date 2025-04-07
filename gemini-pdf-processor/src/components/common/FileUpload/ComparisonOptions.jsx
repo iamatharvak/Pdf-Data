@@ -9,16 +9,21 @@ import {
 import MetricsSelector from "./MetricsSelector";
 import ComparisonMetricsSelector from "./ComparisonMetricsSelector";
 
-const ComparisonOptions = ({ loading, onCompare }) => {
+const ComparisonOptions = ({
+  loading,
+  onCompare,
+  selectedMetrics,
+  onChange,
+}) => {
   const [comparisonType, setComparisonType] = useState(null);
-  const [selectedMetrics, setSelectedMetrics] = useState([]);
+  // const [selectedMetrics, setSelectedMetrics] = useState([]);
 
   const handleComparisonTypeChange = (event, newValue) => {
     if (newValue !== null) {
       setComparisonType(newValue);
       if (newValue === "metrics") {
-        setSelectedMetrics([]);
-      }
+        setSelectedMetrics(onChange);
+      } 
     }
   };
 
@@ -49,7 +54,7 @@ const ComparisonOptions = ({ loading, onCompare }) => {
       {comparisonType === "metrics" && (
         <ComparisonMetricsSelector
           selectedMetrics={selectedMetrics}
-          onChange={setSelectedMetrics}
+          onChange={onChange}
         />
       )}
 
