@@ -243,19 +243,19 @@ app.post("/compare", upload.array("file", 2), async (req, res) => {
     console.log("Raw AI Response:", rawResponse);
 
     const t3 = Date.now();
-    // ✅ Cleaning AI response properly
+    
     let cleanedResponse = rawResponse
       .replace(/```json/g, "") // Remove markdown json start
       .replace(/```/g, "") // Remove markdown json end
       .trim();
 
-    // ✅ Fix trailing commas that break JSON parsing
+    
     cleanedResponse = cleanedResponse
       .replace(/,\s*}/g, "}")
       .replace(/,\s*]/g, "]");
     console.log(cleanedResponse, "post clean");
 
-    // ✅ JSON validation function
+   
     function isValidJson(str) {
       try {
         JSON.parse(str);
