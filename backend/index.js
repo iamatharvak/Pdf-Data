@@ -31,14 +31,12 @@ app.use(
 let extractedDataCache = null;
 
 app.post("/upload", upload.single("file"), async (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://pdf-data-xlwv.vercel.app"
-  );
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   try {
+    // console.log(req);
     const filePath = req.file.path;
     const query = req.body.query || "";
     let selectedMetrics = req.body.metrics || [];
@@ -86,20 +84,23 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();
+      console.log(rawResponse, "here");
 
       let jsonResponse;
-      try {
-        jsonResponse = JSON.parse(rawResponse);
-        if (jsonResponse.columns && jsonResponse.rows) {
-          response.query = jsonResponse;
-        } else {
-          response.query = {
-            text: "Unable to extract metrics in table format.",
-          };
-        }
-      } catch (e) {
-        response.query = { text: "Error parsing metrics data." };
-      }
+      jsonResponse = JSON.parse(rawResponse);
+      response.query = jsonResponse;
+      // try {
+      //   jsonResponse = JSON.parse(rawResponse);
+      //   if (jsonResponse.columns && jsonResponse.rows) {
+      //     response.query = jsonResponse;
+      //   } else {
+      //     response.query = {
+      //       text: "Unable to extract metrics in table format.",
+      //     };
+      //   }
+      // } catch (e) {
+      //   response.query = { text: "Error parsing metrics data." };
+      // }
     }
 
     if (query) {
@@ -112,14 +113,16 @@ app.post("/upload", upload.single("file"), async (req, res) => {
             1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
             2. "rows": A 2D array where each sub-array represents a row of data.
             Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
-        `;
+            If any value is missing, keep it as null.
+            Always return valid JSON even if all fields are null.`;
       } else {
         prompt = `
           PDF Content: ${pdfText}
           User Query: ${query}
           Instruction: Respond to the user's query by providing a detailed paragraph based on the PDF content. If specific data is requested and not directly available, calculate it if possible using the available data and explain the process in the paragraph.
           Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
-        `;
+          If any value is missing, keep it as null.
+          Always return valid JSON even if all fields are null.`;
       }
 
       const result = await model.generateContent(prompt);
@@ -128,6 +131,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         .replace(/```json/g, "")
         .replace(/```/g, "")
         .trim();
+      console.log(rawResponse);
 
       let jsonResponse;
       try {
@@ -147,6 +151,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       query: query || null,
       metrics: selectedMetrics.length > 0 ? selectedMetrics : null,
     };
+    // console.log(finalResponse);
 
     extractedDataCache = response;
     fs.unlinkSync(filePath);
@@ -192,8 +197,11 @@ app.get("/download", (req, res) => {
   }
 });
 app.post("/compare", upload.array("file", 2), async (req, res) => {
+  const t0 = Date.now();
   try {
     if (!req.files || req.files.length !== 2) {
+      const t1 = Date.now();
+      console.log("PDF parse time:", Date.now() - t1, "ms");
       return res.status(400).json({ error: "Please upload exactly two PDFs." });
     }
     const { metrics } = req.body;
@@ -226,14 +234,15 @@ app.post("/compare", upload.array("file", 2), async (req, res) => {
       2. "table1": Extracted data from PDF 1 in JSON format.
       3. "table2": Extracted data from PDF 2 in JSON format.
     `;
-
+    const t2 = Date.now();
     const result = await model.generateContent(prompt);
-
+    console.log("AI generateContent time:", Date.now() - t2, "ms");
     console.log("AI Response:", result.response);
 
     const rawResponse = result.response.text();
     console.log("Raw AI Response:", rawResponse);
 
+    const t3 = Date.now();
     // ✅ Cleaning AI response properly
     let cleanedResponse = rawResponse
       .replace(/```json/g, "") // Remove markdown json start
@@ -244,6 +253,7 @@ app.post("/compare", upload.array("file", 2), async (req, res) => {
     cleanedResponse = cleanedResponse
       .replace(/,\s*}/g, "}")
       .replace(/,\s*]/g, "]");
+    console.log(cleanedResponse, "post clean");
 
     // ✅ JSON validation function
     function isValidJson(str) {
@@ -254,26 +264,48 @@ app.post("/compare", upload.array("file", 2), async (req, res) => {
         return false;
       }
     }
+    console.log("Cleaning & parse time:", Date.now() - t3, "ms");
 
-    // ✅ Final JSON parsing & response handling
+    function normalizeKey(key) {
+      return key
+        .toLowerCase()
+        .replace(/\(.*?\)/g, "")
+        .trim();
+    }
+
     try {
+      const t4 = Date.now();
       if (isValidJson(cleanedResponse)) {
         let jsonResponse = JSON.parse(cleanedResponse);
         if (selectedMetrics && selectedMetrics.length > 0) {
-          jsonResponse.table1 = Object.fromEntries(
-            Object.entries(jsonResponse.table1).filter(([key]) =>
-              selectedMetrics.includes(key)
-            )
-          );
-          jsonResponse.table2 = Object.fromEntries(
-            Object.entries(jsonResponse.table2).filter(([key]) =>
-              selectedMetrics.includes(key)
-            )
-          );
+          const normalizedMetrics = selectedMetrics.map(normalizeKey);
+
+          ["table1", "table2"].forEach((tableKey) => {
+            if (jsonResponse[tableKey]) {
+              jsonResponse[tableKey] = Object.fromEntries(
+                Object.entries(jsonResponse[tableKey]).filter(
+                  ([key, value]) => {
+                    const normalizedKey = normalizeKey(key);
+                    const shouldInclude =
+                      normalizedMetrics.includes(normalizedKey);
+                    if (!shouldInclude) {
+                      console.warn(
+                        `Metric "${key}" was removed because it wasn't in selectedMetrics`
+                      );
+                    }
+                    return shouldInclude;
+                  }
+                )
+              );
+            }
+          });
         }
+        console.log("Total time:", Date.now() - t0, "ms");
+        console.log(jsonResponse, "last");
         res.json(jsonResponse);
       } else {
         console.error("Invalid JSON format after cleaning:", cleanedResponse);
+        console.log("Total handler time (error):", Date.now() - t0, "ms");
         res
           .status(500)
           .json({ error: "AI model returned invalid JSON format." });
@@ -400,11 +432,10 @@ app.post("/process-pdf-url", async (req, res) => {
   try {
     const { pdfUrl, queryType, metrics, query } = req.body;
     if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true }); // Creates the directory if it doesn’t exist
+      fs.mkdirSync(tempDir, { recursive: true });
     }
     const tempFilePath = path.join(tempDir, `temp-${Date.now()}.pdf`);
 
-    // Download the PDF from the URL
     const response = await axios({
       url: pdfUrl,
       method: "GET",
@@ -412,11 +443,8 @@ app.post("/process-pdf-url", async (req, res) => {
     });
     console.log(response, "first");
 
-    // Save temporarily
     await writeFileAsync(tempFilePath, Buffer.from(response.data));
 
-    // Process the PDF using your existing PDF processing logic
-    // This would be the same logic you use for uploaded PDFs
     const results = await model.generateContent(
       tempFilePath,
       queryType,

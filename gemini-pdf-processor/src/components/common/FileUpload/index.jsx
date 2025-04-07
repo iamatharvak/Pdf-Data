@@ -46,7 +46,7 @@ const FileUpload = () => {
       }}
     >
       <Typography variant="h4" align="center" sx={{ marginBottom: 3 }}>
-        Upload & Query PDFs
+        Upload Investor Deck
       </Typography>
 
       <FileList
@@ -61,16 +61,18 @@ const FileUpload = () => {
 
       {files.length === 2 && (
         <>
-          {/* <ComparisonMetricsSelector
+          <ComparisonMetricsSelector
             selectedMetrics={selectedMetrics}
             onChange={setSelectedMetrics}
-          /> */}
-          <ComparisonOptions
+            onCompare={handleCompare}
+            loading={loading}
+          />
+          {/* <ComparisonOptions
             loading={loading}
             onCompare={handleCompare}
-            selectedMetrics={selectedMetrics}
-            onChange={setSelectedMetrics}
-          />
+            // selectedMetrics={selectedMetrics}
+            // onChange={setSelectedMetrics}
+          /> */}
         </>
       )}
 
@@ -81,9 +83,7 @@ const FileUpload = () => {
         onClose={() => setOpenSnackbar(false)}
       />
 
-      {resultData && files.length === 1 && (
-        <ResultsDisplay data={resultData.data[0]} />
-      )}
+      {resultData && files.length === 1 && <ResultsDisplay data={resultData} />}
 
       {resultData && files.length === 2 && (
         <ComparisonDisplay compareData={resultData} />

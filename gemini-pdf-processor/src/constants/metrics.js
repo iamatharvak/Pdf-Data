@@ -13,8 +13,8 @@ export const FINANCIAL_METRICS = {
   ],
   "Yield & Spread Metrics": ["Yield", "Cost of Fund", "Spread", "NIM %"],
   "Quality Metrics": ["GNPA", "NNPA"],
-  "Profitability Metrics": ["ROA", "ROE", "PAT"],
-  "Liability Profile": ["Floating", "Fixed", "Equity"],
+  "Profitability Metrics": ["Return on Asset", "Return on Equity", "PAT"],
+  // "Liability Profile": ["Floating", "Fixed", "Equity"],
 };
 
 // src/constants/config.js

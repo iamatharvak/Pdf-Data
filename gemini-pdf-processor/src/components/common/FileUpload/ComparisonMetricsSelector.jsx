@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Typography,
   Box,
@@ -7,11 +7,20 @@ import {
   AccordionDetails,
   FormControlLabel,
   Checkbox,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FINANCIAL_METRICS } from "../../../constants/metrics";
 
-const ComparisonMetricsSelector = ({ selectedMetrics, onChange }) => {
+const ComparisonMetricsSelector = ({
+  selectedMetrics,
+  onChange,
+  onCompare,
+  loading,
+}) => {
+  const [comparisonType, setComparisonType] = useState(null);
+
   const handleMetricChange = (event) => {
     const { value, checked } = event.target;
     onChange(
@@ -19,6 +28,24 @@ const ComparisonMetricsSelector = ({ selectedMetrics, onChange }) => {
         ? [...selectedMetrics, value]
         : selectedMetrics.filter((metric) => metric !== value)
     );
+  };
+
+  // const handleComparisonTypeChange = (event, newValue) => {
+  //   if (newValue !== null) {
+  //     setComparisonType(newValue);
+  //     if (newValue === "metrics") {
+  //       setSelectedMetrics(onChange);
+  //     }
+  //   }
+  // };
+
+  const handleCompareClick = () => {
+    const comparisonData = {
+      type: "metrics",
+      metrics: selectedMetrics,
+    };
+
+    onCompare(comparisonData);
   };
 
   return (
@@ -47,6 +74,19 @@ const ComparisonMetricsSelector = ({ selectedMetrics, onChange }) => {
             </AccordionDetails>
           </Accordion>
         ))}
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleCompareClick}
+          fullWidth
+          disabled={
+            loading ||
+            (comparisonType === "metrics" && selectedMetrics.length === 0)
+          }
+          sx={{ marginTop: 2 }}
+        >
+          {loading ? <CircularProgress size={24} /> : "Compare Files"}
+        </Button>
       </Box>
     </>
   );

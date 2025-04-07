@@ -12,6 +12,11 @@ export const uploadAndQueryFile = async (file, queryData) => {
   }
 
   const response = await axios.post(`${FILE_API_URL}/upload`, formData);
+  try {
+    console.log(response.status);
+  } catch (error) {
+    console.log(error);
+  }
   return response.data;
 };
 
@@ -20,12 +25,14 @@ export const compareFiles = async (files, selectedMetrics) => {
   formData.append("file", files[0]);
   formData.append("file", files[1]);
   formData.append("metrics", JSON.stringify(selectedMetrics));
+  console.log(formData.values, "data first");
 
   try {
     const response = await axios.post(`${FILE_API_URL}/compare`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data;
+    console.log(response, "abc first");
+    return response;
   } catch (error) {
     console.error("Error comparing files:", error);
     throw error;
