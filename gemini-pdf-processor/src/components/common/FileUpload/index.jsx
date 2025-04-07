@@ -7,7 +7,7 @@ import ComparisonDisplay from "./ComparisonDisplay";
 // ComparisonMetricsSelector
 import { useFinancialData } from "../../../hooks/useFinancialData";
 import Notification from "../Notification";
-import ComparisonOptions from "./ComparisonOptions";
+// import ComparisonOptions from "./ComparisonOptions";
 import ComparisonMetricsSelector from "./ComparisonMetricsSelector";
 
 const FileUpload = () => {
