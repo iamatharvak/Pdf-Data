@@ -9,7 +9,12 @@ import {
   TableHead,
   TableRow,
   Paper,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 const ComparisonDisplay = ({ compareData }) => {
   if (!compareData) return null;
@@ -35,9 +40,24 @@ const ComparisonDisplay = ({ compareData }) => {
       {/* Differences Section */}
       <Box mt={2}>
         <Typography variant="h6">Differences:</Typography>
-        <Typography>
-          {differences || "No significant differences found."}
-        </Typography>
+        {differences ? (
+          <List dense>
+            {differences
+              .split(/\*\s+/) // split by bullet point marker "* "
+              .map((point, index) => point.trim())
+              .filter(Boolean)
+              .map((point, index) => (
+                <ListItem key={index} disableGutters>
+                  <ListItemIcon sx={{ minWidth: 24 }}>
+                    <FiberManualRecordIcon sx={{ fontSize: 8 }} />
+                  </ListItemIcon>
+                  <ListItemText primary={point} />
+                </ListItem>
+              ))}
+          </List>
+        ) : (
+          <Typography>No significant differences found.</Typography>
+        )}
       </Box>
 
       {/* Side‑by‑Side Table */}
