@@ -3,11 +3,14 @@ const pdfParse = require("pdf-parse");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const cors = require("cors");
+const fs = require("fs");
 
 const apikey = "AIzaSyA6UhfFNNaZm0QCKbMdm4V6-T8cHyU8wX4";
 const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(apikey);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const writeFileAsync = promisify(fs.writeFile);
+const unlinkAsync = promisify(fs.unlink);
 
 const allowedOrigins = [
   "https://pdf-data-xlwv.vercel.app",
@@ -15,7 +18,7 @@ const allowedOrigins = [
 ];
 
 module.exports = async (req, res) => {
-  console.log("Incoming request from:", req.headers.origin);
+  // console.log("Incoming request from:", req.headers.origin);
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
