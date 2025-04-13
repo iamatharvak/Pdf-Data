@@ -114,24 +114,18 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     if (query) {
       let prompt;
-      if (query.toLowerCase().includes("table")) {
+
+      if (query.trim()) {
         prompt = `
-          PDF Content: ${pdfText}
-          User Query: ${query}
-          Instruction: Extract the requested financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
-            1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
-            2. "rows": A 2D array where each sub-array represents a row of data.
-            Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
-            If any value is missing, keep it as null.
-            Always return valid JSON even if all fields are null.`;
-      } else {
-        prompt = `
-          PDF Content: ${pdfText}
-          User Query: ${query}
-          Instruction: Respond to the user's query by providing a detailed paragraph based on the PDF content. If specific data is requested and not directly available, calculate it if possible using the available data and explain the process in the paragraph.
-          Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
-          If any value is missing, keep it as null.
-          Always return valid JSON even if all fields are null.`;
+    PDF Content: ${pdfText}
+    User Query: ${query}
+    Instruction: Extract the requested financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
+      1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
+      2. "rows": A 2D array where each sub-array represents a row of data.
+    Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
+    If any value is missing, keep it as null.
+    Always return valid JSON even if all fields are null.
+  `;
       }
 
       const result = await model.generateContent(prompt);
