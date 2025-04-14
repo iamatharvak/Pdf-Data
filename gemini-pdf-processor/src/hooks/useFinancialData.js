@@ -51,7 +51,7 @@ export const useFinancialData = (files, selectedMetrics) => {
     }
   };
 
-  const handleCompare = async () => {
+  const handleCompare = async (comparisonData) => {
     if (files.length !== 2) {
       setError("Upload exactly two PDFs for comparison.");
       return;
@@ -59,8 +59,9 @@ export const useFinancialData = (files, selectedMetrics) => {
 
     setLoading(true);
     try {
+      
       console.log(selectedMetrics, "metrics");
-      const result = await compareFiles(files, selectedMetrics);
+      const result = await compareFiles(files, comparisonData);
       console.log(files, "file");
       console.log(selectedMetrics, "metrics");
       console.log(result, "rsults");

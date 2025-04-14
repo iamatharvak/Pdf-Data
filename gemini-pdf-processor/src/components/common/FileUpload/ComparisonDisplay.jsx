@@ -1,7 +1,7 @@
 import React from "react";
 import {
-  Box,
   Typography,
+  Box,
   Table,
   TableBody,
   TableCell,
@@ -9,86 +9,170 @@ import {
   TableHead,
   TableRow,
   Paper,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+  Divider,
+  Card,
+  CardContent
 } from "@mui/material";
-import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 const ComparisonDisplay = ({ compareData }) => {
-  if (!compareData) return null;
-
-  const { differences, table1 = {}, table2 = {} } = compareData?.data || {};
-
-  // Get all unique metric keys from both tables
-
-  const allMetrics = Array.from(
-    new Set([...Object.keys(table1 || {}), ...Object.keys(table2 || {})])
-  );
-  console.log(allMetrics, "metrics");
-  console.log("compareData", compareData);
-  console.log("table1 keys", Object.keys(table1 || {}));
-  console.log("table2 keys", Object.keys(table2 || {}));
-
-  return (
-    <Box mt={4}>
-      <Typography variant="h5" align="center" gutterBottom>
-        Comparison Results
-      </Typography>
-
-      {/* Differences Section */}
-      <Box mt={2}>
-        <Typography variant="h6">Differences:</Typography>
-        {differences ? (
-          <List dense>
-            {differences
-              .split(/\*\s+/) // split by bullet point marker "* "
-              .map((point, index) => point.trim())
-              .filter(Boolean)
-              .map((point, index) => (
-                <ListItem key={index} disableGutters>
-                  <ListItemIcon sx={{ minWidth: 24 }}>
-                    <FiberManualRecordIcon sx={{ fontSize: 8 }} />
-                  </ListItemIcon>
-                  <ListItemText primary={point} />
-                </ListItem>
-              ))}
-          </List>
-        ) : (
-          <Typography>No significant differences found.</Typography>
-        )}
+  // Handle case when no data is available
+  if (!compareData || !compareData.data) {
+    return (
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6">No comparison data available</Typography>
       </Box>
+    );
+  }
 
-      {/* Side‑by‑Side Table */}
-      <Box mt={3}>
-        <TableContainer component={Paper} sx={{ mt: 1 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
+  const { comparison, table1, table2 } = compareData.data;
+  
+  // Function to determine if a value is a nested object with period data
+  const isPeriodData = (value) => {
+    return typeof value === 'object' && 
+           value !== null && 
+           !Array.isArray(value) && 
+           Object.keys(value).some(key => 
+             key.includes('FY') || key.includes('Q') || /\d{4}/.test(key)
+           );
+  };
+
+  // Function to render period-specific tables
+  const renderPeriodTable = (data) => {
+    if (!data || Object.keys(data).length === 0) return <Typography>No data available</Typography>;
+    
+    // Get all unique periods across all metrics
+    const allPeriods = new Set();
+    Object.values(data).forEach(metric => {
+      if (isPeriodData(metric)) {
+        Object.keys(metric).forEach(period => allPeriods.add(period));
+      }
+    });
+    const periods = Array.from(allPeriods).sort();
+    
+    if (periods.length === 0) return renderSimpleTable(data);
+    
+    return (
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Metric</TableCell>
+              {periods.map(period => (
+                <TableCell key={period}>{period}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Object.entries(data).map(([metric, values]) => (
+              <TableRow key={metric}>
+                <TableCell>{metric}</TableCell>
+                {periods.map(period => (
+                  <TableCell key={period}>
+                    {isPeriodData(values) && values[period] !== undefined 
+                      ? values[period].toLocaleString() 
+                      : 'N/A'}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+  
+  // Function to render simple metric-value tables for non-period data
+  const renderSimpleTable = (data) => {
+    return (
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Metric</TableCell>
+              <TableCell>Value</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Object.entries(data).map(([key, value]) => (
+              <TableRow key={key}>
+                <TableCell>{key}</TableCell>
                 <TableCell>
-                  <strong>Metric</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>PDF 1</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>PDF 2</strong>
+                  {typeof value === 'object' && value !== null
+                    ? JSON.stringify(value)
+                    : String(value)}
                 </TableCell>
               </TableRow>
-            </TableHead>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
 
-            <TableBody>
-              {allMetrics.map((metric) => (
-                <TableRow key={metric}>
-                  <TableCell>{metric}</TableCell>
-                  <TableCell align="right">{table1[metric] ?? "—"}</TableCell>
-                  <TableCell align="right">{table2[metric] ?? "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+  // Function to determine if the data has period structure
+  const hasPeriodStructure = (data) => {
+    if (!data) return false;
+    return Object.values(data).some(value => isPeriodData(value));
+  };
+
+  // Format the markdown-like content in the comparison text
+  const formatComparisonText = (text) => {
+    if (!text) return "";
+    
+    // Replace markdown-style bold with actual bold elements
+    const boldReplaced = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Replace newlines with break elements
+    const breakReplaced = boldReplaced.replace(/\n\n/g, '<br/><br/>');
+    
+    return (
+      <div dangerouslySetInnerHTML={{ __html: breakReplaced }} />
+    );
+  };
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h6" gutterBottom>
+        Comparison Results
+      </Typography>
+      
+      {/* Comparison Analysis */}
+      {comparison && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Analysis:
+            </Typography>
+            <Typography variant="body2" component="div">
+              {formatComparisonText(comparison)}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      <Divider sx={{ my: 2 }} />
+      
+      {/* Data Tables */}
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
+        {/* First Document Data */}
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Document 1 Data:
+          </Typography>
+          {table1 && hasPeriodStructure(table1) 
+            ? renderPeriodTable(table1)
+            : renderSimpleTable(table1)}
+        </Box>
+
+        {/* Second Document Data */}
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Document 2 Data:
+          </Typography>
+          {table2 && hasPeriodStructure(table2)
+            ? renderPeriodTable(table2)
+            : renderSimpleTable(table2)}
+        </Box>
       </Box>
     </Box>
   );
