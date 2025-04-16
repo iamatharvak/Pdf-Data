@@ -45,108 +45,133 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   try {
-    // console.log(req);
+    // if (!req.file) {
+    //   return res.status(400).send("No file was uploaded.");
+    // }
+
     const filePath = req.file.path;
     const query = req.body.query || "";
     let selectedMetrics = req.body.metrics || [];
 
-    if (typeof selectedMetrics === "string") {
-      selectedMetrics = JSON.parse(selectedMetrics);
-    }
-    if (!Array.isArray(selectedMetrics)) {
-      selectedMetrics = [];
-    }
-
-    if (
-      (query && selectedMetrics.length > 0) ||
-      (!query && selectedMetrics.length === 0)
-    ) {
+    // Handle metrics parsing
+    try {
+      if (typeof selectedMetrics === "string") {
+        selectedMetrics = JSON.parse(selectedMetrics);
+      }
+      if (!Array.isArray(selectedMetrics)) {
+        selectedMetrics = [];
+      }
+    } catch (error) {
       fs.unlinkSync(filePath);
-      return res
-        .status(400)
-        .send(
-          "Please provide either a query or selected metrics, but not both or neither."
-        );
+      return res.status(400).send("Invalid metrics format provided.");
     }
 
-    const pdfBuffer = fs.readFileSync(filePath);
-    const pdfData = await pdfParse(pdfBuffer);
-    const pdfText = pdfData.text;
+    // Validate input parameters
+    if ((query && selectedMetrics.length > 0) || (!query && selectedMetrics.length === 0)) {
+      fs.unlinkSync(filePath);
+      return res.status(400).send(
+        "Please provide either a query or selected metrics, but not both or neither."
+      );
+    }
+
+    // Extract text from PDF with better error handling
+    // let pdfText;
+    
+      const pdfBuffer = fs.readFileSync(filePath);
+      const pdfData = await pdfParse(pdfBuffer);
+      const pdfText = pdfData.text;
+      
+      
 
     let response = {};
 
+    // Process based on whether metrics or query is provided
     if (selectedMetrics.length > 0) {
+      // Build a prompt focused on extracting specific metrics
       const prompt = `
-        PDF Content: ${pdfText}
-        Instruction: Extract the following financial metrics from the PDF content: ${selectedMetrics.join(
-          ", "
-        )}. 
-        Extract the requested financial data from the PDF content provided .Present the extracted data in a JSON format with two keys:
-          1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
-          2. "rows": A 2D array where each sub-array represents a row of data.
-            Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
+      You are a financial data extraction specialist for investment analysts.
+      
+      TASK: Extract specific financial metrics from company reports.
+      
+      PDF CONTENT: ${pdfText.substring(0, 25000)}
+      
+      REQUESTED METRICS: ${selectedMetrics.join(", ")}
+      
+      INSTRUCTIONS:
+      1. Search the PDF content carefully for the requested financial metrics.
+      2. Look for these metrics in tables, text paragraphs, bullet points, and footnotes.
+      3. Consider different terminologies companies might use for the same metrics.
+      4. For each metric, extract both the value and the time period it represents.
+      5. Try to find the most recent data available in the document.
+      6. If a metric is not found, mark it as "Not Found" rather than leaving it blank.
+      
+      RESPONSE FORMAT: Provide the data in JSON with:
+      {
+        "columns": ["Metric", "Value", "Year", "Notes"],
+        "rows": [
+          ["Metric Name 1", "Value 1", "Period 1", "Any notes about this data point"],
+          ["Metric Name 2", "Value 2", "Period 2", "Any notes about this data point"]
+        ]
+      }
+      
+      If the data exists in a time series, include multiple years in columns instead.
       `;
 
-      const result = await model.generateContent(prompt);
-      const rawResponse = result.response
-        .text()
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-      console.log(rawResponse, "here");
-
-      let jsonResponse;
-      jsonResponse = JSON.parse(rawResponse);
-      response.query = jsonResponse;
-      // try {
-      //   jsonResponse = JSON.parse(rawResponse);
-      //   if (jsonResponse.columns && jsonResponse.rows) {
-      //     response.query = jsonResponse;
-      //   } else {
-      //     response.query = {
-      //       text: "Unable to extract metrics in table format.",
-      //     };
-      //   }
-      // } catch (e) {
-      //   response.query = { text: "Error parsing metrics data." };
-      // }
+      const result = await model.generateContent({
+        prompt,
+        generationConfig: { temperature: 0 }
+      });
+      
+      const rawResponse = result.response.text();
+      console.log("Raw metrics response:", rawResponse);
+      
+      // Process the model response with better error handling
+      const processedResponse = processModelResponse(rawResponse);
+      response.query = processedResponse.data;
     }
 
     if (query) {
-      let prompt;
-
-      if (query.trim()) {
-        prompt = `
-    PDF Content: ${pdfText}
-    User Query: ${query}
-    Instruction: Extract the requested financial data from the PDF content provided. Present the extracted data in a JSON format with two keys:
-      1. "columns": An array of column names for the table, including "Year" (the fiscal year or period the data pertains to, inferred from the PDF context) where applicable.
-      2. "rows": A 2D array where each sub-array represents a row of data.
-    Additional Guidance: If the query involves financial metrics like yield, cost of borrowing, or spread, ensure they are presented in that order of precedence (yield > cost of borrowing > spread) in the table columns or rows where relevant.
-    If any value is missing, keep it as null.
-    Always return valid JSON even if all fields are null.
-  `;
+      // Build a prompt focused on the user's specific query
+      const prompt = `
+      You are a financial data extraction specialist for investment analysts.
+      
+      TASK: Answer a specific query about financial data from a company report.
+      
+      PDF CONTENT: ${pdfText.substring(0, 25000)}
+      
+      USER QUERY: ${query}
+      
+      INSTRUCTIONS:
+      1. Focus specifically on answering the user query with precise data from the document.
+      2. Search for relevant information in tables, text, footnotes, and graphs described in text.
+      3. When presenting financial data, always include the time period it represents.
+      4. If data appears in multiple places, use the most detailed or recent instance.
+      5. If requested data is not found, clearly state this rather than making assumptions.
+      
+      RESPONSE FORMAT: Provide the data in JSON with:
+      {
+        "columns": ["Appropriate Column Headers Based on Query"],
+        "rows": [["Data Row 1"], ["Data Row 2"]]
       }
-
-      const result = await model.generateContent(prompt);
-      const rawResponse = result.response
-        .text()
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-      console.log(rawResponse);
-
-      let jsonResponse;
-      try {
-        jsonResponse = JSON.parse(rawResponse);
-        if (jsonResponse.columns && jsonResponse.rows) {
-          response.query = jsonResponse;
-        } else {
-          response.query = { text: rawResponse };
-        }
-      } catch (e) {
-        response.query = { text: rawResponse };
+      
+      If the query is general and doesn't fit tabular format, respond with:
+      {
+        "text": "Your detailed answer here"
       }
+      `;
+
+      const result = await model.generateContent(
+        (prompt.toString()),
+       
+      );
+      console.log("1");
+      
+      const rawResponse = result.response.text();
+      console.log("Raw query response:", rawResponse);
+      
+      // Process the model response
+      const processedResponse = processModelResponse(rawResponse);
+      response.query = processedResponse.data;
     }
 
     const finalResponse = {
@@ -154,17 +179,70 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       query: query || null,
       metrics: selectedMetrics.length > 0 ? selectedMetrics : null,
     };
-    // console.log(finalResponse);
 
-    extractedDataCache = response;
+    console.log("Final response structure:", JSON.stringify(finalResponse, null, 2));
+    
+    // Clean up the uploaded file
     fs.unlinkSync(filePath);
 
     res.json(finalResponse);
   } catch (error) {
     console.error("Error processing request:", error);
-    res.status(500).send("Error processing the file.");
+    
+    // Clean up the uploaded file if it exists
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error("Error deleting uploaded file:", unlinkError);
+      }
+    }
+    
+    res.status(500).send("Error processing the file: " + error.message);
   }
 });
+
+// Helper function to process model responses
+function processModelResponse(rawResponse) {
+  try {
+    // Clean up the response
+    const cleanResponse = rawResponse
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+    
+    // Try to parse as JSON
+    try {
+      const jsonResponse = JSON.parse(cleanResponse);
+      
+      // Validate the expected structure
+      if (jsonResponse.columns && Array.isArray(jsonResponse.columns) && 
+          jsonResponse.rows && Array.isArray(jsonResponse.rows)) {
+        return { success: true, data: jsonResponse };
+      } else if (jsonResponse.text) {
+        return { success: true, data: jsonResponse };
+      } else {
+        // Has JSON but incorrect structure
+        return { 
+          success: false, 
+          data: { text: "The data couldn't be structured properly. Raw extraction results: " + cleanResponse }
+        };
+      }
+    } catch (e) {
+      // Not valid JSON, return as text
+      return { 
+        success: true, 
+        data: { text: cleanResponse }
+      };
+    }
+  } catch (error) {
+    console.error("Error processing model response:", error);
+    return { 
+      success: false, 
+      data: { text: "Failed to process the response from the AI model." }
+    };
+  }
+}
 
 app.get("/download", (req, res) => {
   try {

@@ -78,6 +78,10 @@ export const useFinancialData = (files, selectedMetrics) => {
     }
   };
 
+  const resetResultData = () => {
+    setResultData(null);
+  };
+
   return {
     symbol,
     setSymbol,
@@ -90,5 +94,6 @@ export const useFinancialData = (files, selectedMetrics) => {
     // balanceSheet,
     handleUpload,
     handleCompare,
+    resetResultData
   };
 };

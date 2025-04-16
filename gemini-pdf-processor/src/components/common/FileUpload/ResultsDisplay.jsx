@@ -12,6 +12,7 @@ const ResultsDisplay = ({ data }) => {
   const [selectedYear, setSelectedYear] = useState("");
 
   const getUniqueYears = (data) => {
+    console.log(data)
     if (!data || !data.query || !data.query.rows) return [];
     const yearIndex = data.query.columns.indexOf("Year");
     if (yearIndex === -1) return [];

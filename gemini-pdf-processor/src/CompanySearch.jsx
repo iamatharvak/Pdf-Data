@@ -15,7 +15,7 @@ const CompanyReports = () => {
     setError("");
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/getCompanyReports?companyName=${companyName}`
+        `http://localhost:5001/api/getCompanyReports?companyName=${companyName}`
       );
       setReports(response.data.reports);
       console.log(response);

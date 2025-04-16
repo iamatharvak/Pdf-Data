@@ -22,16 +22,19 @@ const FileUpload = () => {
     resultData,
     handleUpload,
     handleCompare,
+    resetResultData
   } = useFinancialData(files, selectedMetrics);
 
   const handleFileChange = (event) => {
     if (files.length < 2) {
       setFiles([...files, event.target.files[0]]);
+      resetResultData();
     }
   };
 
   const handleRemoveFiles = (index) => {
     setFiles(files.filter((_, i) => i !== index));
+    resetResultData();
   };
 
   return (
